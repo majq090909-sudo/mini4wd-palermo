@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>GARA MINI 4wd Palermo — Batterie e classifiche</title>
+<style>
+:root{color-scheme:light;--ink:#111827;--muted:#64748b;--line:#dbe2ea;--paper:#fff;--bg:#f1f5f9;--blue:#1d4ed8;--soft:#eff6ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,textarea{font:inherit}button{cursor:pointer;border:1px solid #cbd5e1;background:white;color:var(--ink);border-radius:10px;padding:10px 12px;font-weight:700}
+button.active,button.primary{background:var(--ink);color:white;border-color:var(--ink)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.wrap{width:min(100% - 24px,1100px);margin:auto;padding:16px 0 40px}
+.hero{background:var(--ink);color:white;border-radius:18px;padding:22px;margin-bottom:14px}.kicker{font-size:.78rem;letter-spacing:.12em;font-weight:800;color:#bfdbfe;text-transform:uppercase}
+h1{font-size:clamp(1.45rem,5vw,2.2rem);line-height:1.15;margin:7px 0}.hero p{color:#dbeafe;margin:8px 0 0}
+.panel{background:white;border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+h2{font-size:1.15rem;margin:0 0 12px}h3{font-size:1.05rem;margin:0 0 10px}
+label{font-weight:750;display:block;margin:12px 0 8px}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+textarea{display:block;width:100%;min-height:150px;resize:vertical;padding:13px;border:2px solid #aebccc;border-radius:12px;background:#fff;color:var(--ink);font-size:17px;line-height:1.5}
+input[type="number"]{width:100%;min-width:75px;padding:9px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:var(--ink)}
+.count{font-weight:750;color:var(--blue);margin-top:8px;min-height:1.5em}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.actions button{flex:1 1 145px}
+.small{font-size:.9rem;color:var(--muted);line-height:1.45}.status{border-radius:10px;background:var(--soft);color:#1e40af;padding:10px 12px;font-size:.9rem;margin-top:12px}
+.layout{display:grid;grid-template-columns:1fr;gap:14px}.results-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.pill{background:#e2e8f0;border-radius:999px;padding:4px 9px;font-size:.8rem;font-weight:750}
+.round{border-top:1px solid var(--line);padding-top:16px;margin-top:18px}.battery-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.battery{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fbfdff;break-inside:avoid}.battery h4{margin:0 0 8px;color:#475569;font-size:.9rem}.battery ol{padding-left:24px;margin:0}.battery li{padding:4px 0;overflow-wrap:anywhere}
+.empty{padding:16px;background:#f8fafc;border-radius:12px;color:var(--muted)}
+.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.92rem}th,td{padding:9px 8px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}th{background:#f8fafc;font-size:.82rem;color:#475569}
+.time-table input{width:100px}.best{font-weight:800;color:#166534}.rank{font-weight:800}
+footer{text-align:center;color:var(--muted);font-size:.82rem;padding:8px}
+@media(min-width:850px){.layout{grid-template-columns:minmax(300px,.75fr) minmax(0,1.25fr)}}
+@media print{body{background:white}.wrap{width:100%;padding:0}.hero{background:white;color:black;padding:0}.hero p,.kicker,.editor,.no-print,footer{display:none!important}.panel{border:0;box-shadow:none;padding:0}.round{break-inside:avoid}.battery-grid{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body><main class="wrap">
+<header class="hero"><div class="kicker">Gara Mini 4wd Palermo</div><h1>Gestione gara</h1><p>Batterie · Tempi · Best lap · Classifiche in tempo reale</p></header>
+<div class="layout">
+<section class="panel editor">
+<h2>1. Iscritti e batterie</h2>
+<div class="tabs"><button type="button" data-cat="TMEC" class="active">T-MEC</button><button type="button" data-cat="EXPERT">EXPERT</button><button type="button" data-cat="OPEN">OPEN</button></div>
+<label for="racers">Racer iscritti — uno per riga</label>
+<textarea id="racers" placeholder="Marco&#10;Cuci&#10;Pepa&#10;Coco&#10;Luna" autocapitalize="words" spellcheck="false"></textarea>
+<div id="count" class="count">0 racer inseriti</div>
+<div class="actions"><button type="button" id="generate" class="primary">Genera 4 manche</button><button type="button" id="clear">Svuota categoria</button></div>
+<div class="actions"><button type="button" id="print">Stampa pagina</button></div>
+<div id="status" class="status">Scrivi i nomi, uno per riga. I conteggi e le classifiche si aggiornano automaticamente.</div>
+<p class="small">Elenchi e risultati sono salvati nel browser di questo dispositivo. Non vengono sincronizzati automaticamente con altri telefoni.</p>
+</section>
+<section class="panel">
+<div class="results-head"><h2 style="margin:0">2. Batterie</h2><span class="pill" id="resultCat">T-MEC</span></div>
+<div id="batteries" style="margin-top:14px"><div class="empty">Inserisci i racer e genera le quattro manche.</div></div>
+</section>
+</div>
+<section class="panel">
+<div class="results-head"><h2 style="margin:0">3. Inserimento tempi</h2><span class="pill" id="timeCat">T-MEC</span></div>
+<p class="small">Inserisci il tempo registrato per ogni racer in ogni manche, in secondi (es. 23.451). Lascia vuoto se non ha un tempo. Il best lap è il tempo più basso registrato; la classifica provvisoria usa la media dei due migliori tempi validi di ogni racer, dal più basso al più alto. Servono almeno due tempi per entrare in classifica.</p>
+<div id="timings"><div class="empty">Genera prima le manche per creare la tabella dei tempi.</div></div>
+</section>
+<section class="panel">
+<div class="results-head"><h2 style="margin:0">4. Classifica provvisoria</h2><span class="pill">Aggiornamento automatico</span></div>
+<div id="standings" style="margin-top:14px"><div class="empty">Inserisci i tempi per vedere best lap e classifica.</div></div>
+</section>
+<footer>GARA MINI 4wd Palermo · Verifica i tempi inseriti prima di confermare la classifica finale.</footer>
+</main>
+<script>
+(function(){
+"use strict";
+const CATS=["TMEC","EXPERT","OPEN"],LABELS={TMEC:"T-MEC",EXPERT:"EXPERT",OPEN:"OPEN"},KEY="mini4wd-palermo-race-v2";
+let state={};try{state=JSON.parse(localStorage.getItem(KEY)||"{}")||{};}catch(e){state={};}
+CATS.forEach(c=>{if(!state[c])state[c]={text:"",rounds:null,times:{}};});
+let current="TMEC";
+const area=document.getElementById("racers"),count=document.getElementById("count"),status=document.getElementById("status");
+const batteries=document.getElementById("batteries"),timings=document.getElementById("timings"),standings=document.getElementById("standings");
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){status.textContent="Salvataggio browser non disponibile: tieni la pagina aperta e stampa i risultati.";}}
+function namesFrom(text){const seen=new Set(),out=[];text.split(/\r?\n/).forEach(line=>{let n=line.trim();if(!n)return;let k=n.toLocaleLowerCase("it-IT");if(!seen.has(k)){seen.add(k);out.push(n);}});return out;}
+function updateCount(){state[current].text=area.value;let raw=area.value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean),n=namesFrom(area.value).length;count.textContent=n+" racer iscritt"+(n===1?"o":"i")+(raw.length>n?" · duplicati esclusi":"");persist();}
+function esc(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function partition(a){let g=[],i=0;if(a.length%3===1&&a.length>=4){while(a.length-i>4){g.push(a.slice(i,i+3));i+=3;}g.push(a.slice(i,i+2),a.slice(i+2,i+4));i+=4;}while(i<a.length){let left=a.length-i,size=Math.min(3,left);g.push(a.slice(i,i+size));i+=size;}return g;}
+function makeSchedule(ns){let pairs=new Map(),rounds=[];for(let r=0;r<4;r++){let best=null,bestScore=Infinity;for(let a=0;a<650;a++){let gs=partition(shuffle(ns)),score=Math.random();gs.forEach(g=>{if(g.length===1)score+=10000;if(g.length===2)score+=1.5;for(let i=0;i<g.length;i++)for(let j=i+1;j<g.length;j++){let k=[g[i],g[j]].sort().join("\u0000");score+=(pairs.get(k)||0)*100;}});if(score<bestScore){bestScore=score;best=gs;}}
+best.forEach(g=>{for(let i=0;i<g.length;i++)for(let j=i+1;j<g.length;j++){let k=[g[i],g[j]].sort().join("\u0000");pairs.set(k,(pairs.get(k)||0)+1);}});rounds.push(best);}return rounds;}
+function renderBatteries(){let s=state[current];document.getElementById("resultCat").textContent=LABELS[current];if(!s.rounds){batteries.innerHTML='<div class="empty">Inserisci i racer e genera le quattro manche.</div>';return;}
+let html="";s.rounds.forEach((groups,ri)=>{html+='<section class="round"><h3>Manche '+(ri+1)+'</h3><div class="battery-grid">';let bn=0;groups.forEach(g=>{let bye=g.length===1;if(!bye)bn++;html+='<article class="battery"><h4>'+(bye?"Riposo":"Batteria "+bn)+'</h4><ol>'+g.map(n=>'<li>'+esc(n)+'</li>').join("")+'</ol></article>';});html+='</div></section>';});batteries.innerHTML=html;}
+function validTime(v){if(v===null||v===undefined||String(v).trim()==="")return null;let n=Number(String(v).trim().replace(",","."));return Number.isFinite(n)&&n>0?n:null;}
+function timeFmt(n){return n===null||n===undefined?"—":n.toFixed(3)+" s";}
+function renderTimings(){let s=state[current],ns=namesFrom(s.text);document.getElementById("timeCat").textContent=LABELS[current];if(!s.rounds||!ns.length){timings.innerHTML='<div class="empty">Genera prima le manche per creare la tabella dei tempi.</div>';renderStandings();return;}
+let html='<div class="table-wrap"><table class="time-table"><thead><tr><th>Racer</th><th>Manche 1 (s)</th><th>Manche 2 (s)</th><th>Manche 3 (s)</th><th>Manche 4 (s)</th></tr></thead><tbody>';
+ns.forEach(n=>{html+='<tr><td>'+esc(n)+'</td>';for(let r=1;r<=4;r++){let v=s.times[n]&&s.times[n][r]!==undefined?s.times[n][r]:"";html+='<td><input type="number" min="0" step="0.001" inputmode="decimal" aria-label="'+esc(n)+' manche '+r+'" data-racer="'+esc(n)+'" data-round="'+r+'" value="'+esc(String(v))+'" placeholder="es. 23.451"></td>';}html+='</tr>';});html+='</tbody></table></div>';timings.innerHTML=html;
+timings.querySelectorAll("input").forEach(inp=>inp.addEventListener("input",()=>{let n=inp.dataset.racer,r=inp.dataset.round;if(!s.times[n])s.times[n]={};s.times[n][r]=inp.value;persist();renderStandings();}));
+renderStandings();}
+function renderStandings(){let s=state[current],ns=namesFrom(s.text);if(!s.rounds||!ns.length){standings.innerHTML='<div class="empty">Inserisci i racer e genera le manche.</div>';return;}
+let rows=ns.map(n=>{let vals=[];for(let r=1;r<=4;r++){let v=validTime(s.times[n]&&s.times[n][r]);if(v!==null)vals.push(v);}vals.sort((a,b)=>a-b);let top=vals.slice(0,2);return{name:n,count:vals.length,best:vals.length?vals[0]:null,topCount:top.length,average:top.length===2?(top[0]+top[1])/2:null,topTimes:top};});
+rows.sort((a,b)=>{if(a.average===null&&b.average!==null)return 1;if(b.average===null&&a.average!==null)return -1;if(a.average===null&&b.average===null)return a.name.localeCompare(b.name);return a.average-b.average||(a.best-b.best)||a.name.localeCompare(b.name);});
+let bestAll=rows.reduce((m,r)=>r.best!==null&&(m===null||r.best<m)?r.best:m,null);
+let html='<p class="small">Best lap assoluto della categoria: <strong class="best">'+timeFmt(bestAll)+'</strong></p><div class="table-wrap"><table><thead><tr><th>Pos.</th><th>Racer</th><th>Tempi registrati</th><th>Due migliori tempi</th><th>Media classifica (s)</th><th>Best lap (s)</th></tr></thead><tbody>';
+rows.forEach((r,i)=>{let two=r.topTimes.map(v=>v.toFixed(3)).join(" + ");html+='<tr><td class="rank">'+(r.topCount===2?i+1:"—")+'</td><td>'+esc(r.name)+'</td><td>'+r.count+'/4</td><td>'+(r.topCount?two:"—")+'</td><td>'+(r.average===null?"In attesa di 2 tempi":r.average.toFixed(3))+'</td><td class="'+(r.best===bestAll&&r.best!==null?"best":"")+'">'+(r.best===null?"—":r.best.toFixed(3))+'</td></tr>';});
+html+='</tbody></table></div><p class="small">Classifica ordinata dalla media più bassa dei due migliori tempi validi. Per entrare in classifica il racer deve avere almeno 2 tempi registrati; con un solo tempo il suo best lap è comunque mostrato.</p>';standings.innerHTML=html;}
+function switchCat(c){state[current].text=area.value;persist();current=c;document.querySelectorAll("[data-cat]").forEach(b=>b.classList.toggle("active",b.dataset.cat===c));area.value=state[c].text||"";updateCount();renderBatteries();renderTimings();status.textContent="Categoria selezionata: "+LABELS[c]+".";}
+document.querySelectorAll("[data-cat]").forEach(b=>b.addEventListener("click",()=>switchCat(b.dataset.cat)));
+area.addEventListener("input",()=>{updateCount();state[current].rounds=null;renderBatteries();renderTimings();status.textContent="Elenco aggiornato. Rigenera le manche se hai modificato gli iscritti.";});
+document.getElementById("generate").addEventListener("click",()=>{updateCount();let ns=namesFrom(area.value);if(ns.length<2){status.textContent="Inserisci almeno 2 nomi distinti.";return;}state[current].rounds=makeSchedule(ns);let keep={};ns.forEach(n=>{if(state[current].times[n])keep[n]=state[current].times[n];});state[current].times=keep;persist();renderBatteries();renderTimings();status.textContent="Quattro manche generate per "+LABELS[current]+".";});
+document.getElementById("clear").addEventListener("click",()=>{if(!confirm("Cancellare iscritti, manche e tempi della categoria "+LABELS[current]+"?"))return;state[current]={text:"",rounds:null,times:{}};area.value="";updateCount();renderBatteries();renderTimings();status.textContent="Categoria svuotata.";});
+document.getElementById("print").addEventListener("click",()=>window.print());
+area.value=state[current].text||"";updateCount();renderBatteries();renderTimings();
+})();
+</script>
+</body></html>
