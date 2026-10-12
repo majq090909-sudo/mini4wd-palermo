@@ -44,9 +44,10 @@ footer{text-align:center;color:var(--muted);font-size:.82rem;padding:8px}
 <textarea id="racers" placeholder="Marco&#10;Cuci&#10;Pepa&#10;Coco&#10;Luna" autocapitalize="words" spellcheck="false"></textarea>
 <div id="count" class="count">0 racer inseriti</div>
 <div class="actions"><button type="button" id="generate" class="primary">Genera 4 manche</button><button type="button" id="clear">Svuota categoria</button></div>
+<div class="actions"><button type="button" id="downloadBackup" class="primary">Scarica backup gara</button><button type="button" id="restoreBackup">Ripristina backup</button><input type="file" id="backupFile" accept=".json,application/json" hidden></div>
 <div class="actions"><button type="button" id="print">Stampa pagina</button></div>
 <div id="status" class="status">Scrivi i nomi, uno per riga. I conteggi e le classifiche si aggiornano automaticamente.</div>
-<p class="small">Elenchi e risultati sono salvati nel browser di questo dispositivo. Non vengono sincronizzati automaticamente con altri telefoni.</p>
+<p class="small">Elenchi e risultati sono salvati nel browser di questo dispositivo. Usa “Scarica backup gara” per conservare tutti i dati in un file JSON; potrai ricaricarlo con “Ripristina backup”. Non vengono sincronizzati automaticamente con altri telefoni.</p>
 </section>
 <section class="panel">
 <div class="results-head"><h2 style="margin:0">2. Batterie</h2><span class="pill" id="resultCat">T-MEC</span></div>
@@ -102,6 +103,26 @@ document.querySelectorAll("[data-cat]").forEach(b=>b.addEventListener("click",()
 area.addEventListener("input",()=>{updateCount();state[current].rounds=null;renderBatteries();renderTimings();status.textContent="Elenco aggiornato. Rigenera le manche se hai modificato gli iscritti.";});
 document.getElementById("generate").addEventListener("click",()=>{updateCount();let ns=namesFrom(area.value);if(ns.length<2){status.textContent="Inserisci almeno 2 nomi distinti.";return;}state[current].rounds=makeSchedule(ns);let keep={};ns.forEach(n=>{if(state[current].times[n])keep[n]=state[current].times[n];});state[current].times=keep;persist();renderBatteries();renderTimings();status.textContent="Quattro manche generate per "+LABELS[current]+".";});
 document.getElementById("clear").addEventListener("click",()=>{if(!confirm("Cancellare iscritti, manche e tempi della categoria "+LABELS[current]+"?"))return;state[current]={text:"",rounds:null,times:{}};area.value="";updateCount();renderBatteries();renderTimings();status.textContent="Categoria svuotata.";});
+document.getElementById("downloadBackup").addEventListener("click",()=>{
+  state[current].text=area.value;persist();
+  const backup={format:"mini4wd-palermo-backup",version:1,createdAt:new Date().toISOString(),data:state};
+  const blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json;charset=utf-8"});
+  const url=URL.createObjectURL(blob),a=document.createElement("a"),stamp=new Date().toISOString().slice(0,10);
+  a.href=url;a.download="backup-gara-mini4wd-palermo-"+stamp+".json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  status.textContent="Backup scaricato. Conserva il file in File/iCloud Drive o in un altro posto sicuro.";
+});
+document.getElementById("restoreBackup").addEventListener("click",()=>document.getElementById("backupFile").click());
+document.getElementById("backupFile").addEventListener("change",async ev=>{
+  const file=ev.target.files&&ev.target.files[0];if(!file)return;
+  try{
+    const parsed=JSON.parse(await file.text());const incoming=parsed&&parsed.format==="mini4wd-palermo-backup"?parsed.data:parsed;
+    if(!incoming||typeof incoming!=="object"||!CATS.every(c=>incoming[c]&&typeof incoming[c].text==="string"&&incoming[c].times&&typeof incoming[c].times==="object"))throw new Error("Formato non valido");
+    if(!confirm("Il backup sostituirà i dati attualmente presenti in questo sito. Vuoi continuare?"))return;
+    state={};CATS.forEach(c=>{const v=incoming[c];state[c]={text:v.text,rounds:Array.isArray(v.rounds)?v.rounds:null,times:v.times&&typeof v.times==="object"?v.times:{}};});
+    current="TMEC";persist();document.querySelectorAll("[data-cat]").forEach(b=>b.classList.toggle("active",b.dataset.cat===current));area.value=state[current].text||"";updateCount();renderBatteries();renderTimings();status.textContent="Backup ripristinato correttamente per tutte le categorie.";
+  }catch(err){alert("Non riesco a leggere questo backup. Seleziona un file JSON scaricato da questo sito.");}
+  finally{ev.target.value="";}
+});
 document.getElementById("print").addEventListener("click",()=>window.print());
 area.value=state[current].text||"";updateCount();renderBatteries();renderTimings();
 })();
