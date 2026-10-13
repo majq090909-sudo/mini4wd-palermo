@@ -22,7 +22,7 @@ textarea{display:block;width:100%;min-height:150px;resize:vertical;padding:13px;
 input[type="number"]{width:100%;min-width:75px;padding:9px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:var(--ink)}
 .count{font-weight:750;color:var(--blue);margin-top:8px;min-height:1.5em}
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.actions button{flex:1 1 145px}
-.small{font-size:.9rem;color:var(--muted);line-height:1.45}.status{border-radius:10px;background:var(--soft);color:#1e40af;padding:10px 12px;font-size:.9rem;margin-top:12px}
+.small{font-size:.9rem;color:var(--muted);line-height:1.45}.status{border-radius:10px;background:var(--soft);color:#1e40af;padding:10px 12px;font-size:.9rem;margin-top:12px}.record-card{background:#111827;color:white;border-radius:14px;padding:16px;margin:12px 0}.record-card .record-time{font-size:2rem;font-weight:850;color:#fde047}.record-card .record-name{font-size:1.2rem;font-weight:800}.record-card .record-meta{color:#cbd5e1;font-size:.9rem;margin-top:5px}
 .layout{display:grid;grid-template-columns:1fr;gap:14px}.results-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.pill{background:#e2e8f0;border-radius:999px;padding:4px 9px;font-size:.8rem;font-weight:750}
 .round{border-top:1px solid var(--line);padding-top:16px;margin-top:18px}.battery-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
 .battery{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fbfdff;break-inside:avoid}.battery h4{margin:0 0 8px;color:#475569;font-size:.9rem}.battery ol{padding-left:24px;margin:0}.battery li{padding:4px 0;overflow-wrap:anywhere}
@@ -44,7 +44,7 @@ footer{text-align:center;color:var(--muted);font-size:.82rem;padding:8px}
 <textarea id="racers" placeholder="Marco&#10;Cuci&#10;Pepa&#10;Coco&#10;Luna" autocapitalize="words" spellcheck="false"></textarea>
 <div id="count" class="count">0 racer inseriti</div>
 <div class="actions"><button type="button" id="generate" class="primary">Genera 4 manche</button><button type="button" id="clear">Svuota categoria</button></div>
-<div class="actions"><button type="button" id="downloadBackup" class="primary">Scarica backup gara</button><button type="button" id="restoreBackup">Ripristina backup</button><input type="file" id="backupFile" accept=".json,application/json" hidden></div>
+<div class="panel" style="padding:12px;margin-top:14px;background:#f8fafc"><h3>Impostazioni evento</h3><label for="trackLength">Lunghezza complessiva della pista (metri)</label><input type="number" id="trackLength" min="0.001" step="0.001" inputmode="decimal" placeholder="Es. 38"/><p class="small">Imposta la lunghezza una sola volta: verrà usata per T-MEC, Expert e Open e sarà inclusa nel backup della gara. Per un evento futuro potrai modificarla.</p></div><div class="actions"><button type="button" id="downloadBackup" class="primary">Scarica backup gara</button><button type="button" id="restoreBackup">Ripristina backup</button><input type="file" id="backupFile" accept=".json,application/json" hidden></div>
 <div class="actions"><button type="button" id="print">Stampa pagina</button></div>
 <div id="status" class="status">Scrivi i nomi, uno per riga. I conteggi e le classifiche si aggiornano automaticamente.</div>
 <p class="small">Elenchi e risultati sono salvati nel browser di questo dispositivo. Usa “Scarica backup gara” per conservare tutti i dati in un file JSON; potrai ricaricarlo con “Ripristina backup”. Non vengono sincronizzati automaticamente con altri telefoni.</p>
@@ -54,6 +54,8 @@ footer{text-align:center;color:var(--muted);font-size:.82rem;padding:8px}
 <div id="batteries" style="margin-top:14px"><div class="empty">Inserisci i racer e genera le quattro manche.</div></div>
 </section>
 </div>
+<section class="panel">
+<div class="results-head"><h2 style="margin:0">Best lap generale live</h2><span class="pill">Tutte le categorie</span></div><div id="overallRecord"><div class="empty">Inserisci un tempo valido per vedere il record generale.</div></div></section>
 <section class="panel">
 <div class="results-head"><h2 style="margin:0">3. Inserimento tempi</h2><span class="pill" id="timeCat">T-MEC</span></div>
 <p class="small">Inserisci il tempo registrato per ogni racer in ogni manche, in secondi (es. 23.451). Lascia vuoto se non ha un tempo. Il best lap è il tempo più basso registrato; la classifica provvisoria usa la media dei due migliori tempi validi di ogni racer, dal più basso al più alto. Servono almeno due tempi per entrare in classifica.</p>
@@ -70,9 +72,12 @@ footer{text-align:center;color:var(--muted);font-size:.82rem;padding:8px}
 "use strict";
 const CATS=["TMEC","EXPERT","OPEN"],LABELS={TMEC:"T-MEC",EXPERT:"EXPERT",OPEN:"OPEN"},KEY="mini4wd-palermo-race-v2";
 let state={};try{state=JSON.parse(localStorage.getItem(KEY)||"{}")||{};}catch(e){state={};}
+if(!state.meta)state.meta={trackLength:""};
 CATS.forEach(c=>{if(!state[c])state[c]={text:"",rounds:null,times:{}};});
 let current="TMEC";
-const area=document.getElementById("racers"),count=document.getElementById("count"),status=document.getElementById("status");
+const area=document.getElementById("racers"),count=document.getElementById("count"),status=document.getElementById("status"),trackLengthInput=document.getElementById("trackLength"),overallRecord=document.getElementById("overallRecord");
+trackLengthInput.value=state.meta.trackLength||"";
+trackLengthInput.addEventListener("input",()=>{state.meta.trackLength=trackLengthInput.value;persist();renderTimings();renderOverallRecord();});
 const batteries=document.getElementById("batteries"),timings=document.getElementById("timings"),standings=document.getElementById("standings");
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){status.textContent="Salvataggio browser non disponibile: tieni la pagina aperta e stampa i risultati.";}}
 function namesFrom(text){const seen=new Set(),out=[];text.split(/\r?\n/).forEach(line=>{let n=line.trim();if(!n)return;let k=n.toLocaleLowerCase("it-IT");if(!seen.has(k)){seen.add(k);out.push(n);}});return out;}
@@ -89,15 +94,16 @@ function timeFmt(n){return n===null||n===undefined?"—":n.toFixed(3)+" s";}
 function renderTimings(){let s=state[current],ns=namesFrom(s.text);document.getElementById("timeCat").textContent=LABELS[current];if(!s.rounds||!ns.length){timings.innerHTML='<div class="empty">Genera prima le manche per creare la tabella dei tempi.</div>';renderStandings();return;}
 let html='<div class="table-wrap"><table class="time-table"><thead><tr><th>Racer</th><th>Manche 1 (s)</th><th>Manche 2 (s)</th><th>Manche 3 (s)</th><th>Manche 4 (s)</th></tr></thead><tbody>';
 ns.forEach(n=>{html+='<tr><td>'+esc(n)+'</td>';for(let r=1;r<=4;r++){let v=s.times[n]&&s.times[n][r]!==undefined?s.times[n][r]:"";html+='<td><input type="number" min="0" step="0.001" inputmode="decimal" aria-label="'+esc(n)+' manche '+r+'" data-racer="'+esc(n)+'" data-round="'+r+'" value="'+esc(String(v))+'" placeholder="es. 23.451"></td>';}html+='</tr>';});html+='</tbody></table></div>';timings.innerHTML=html;
-timings.querySelectorAll("input").forEach(inp=>inp.addEventListener("input",()=>{let n=inp.dataset.racer,r=inp.dataset.round;if(!s.times[n])s.times[n]={};s.times[n][r]=inp.value;persist();renderStandings();}));
-renderStandings();}
-function renderStandings(){let s=state[current],ns=namesFrom(s.text);if(!s.rounds||!ns.length){standings.innerHTML='<div class="empty">Inserisci i racer e genera le manche.</div>';return;}
-let rows=ns.map(n=>{let vals=[];for(let r=1;r<=4;r++){let v=validTime(s.times[n]&&s.times[n][r]);if(v!==null)vals.push(v);}vals.sort((a,b)=>a-b);let top=vals.slice(0,2);return{name:n,count:vals.length,best:vals.length?vals[0]:null,topCount:top.length,average:top.length===2?(top[0]+top[1])/2:null,topTimes:top};});
-rows.sort((a,b)=>{if(a.average===null&&b.average!==null)return 1;if(b.average===null&&a.average!==null)return -1;if(a.average===null&&b.average===null)return a.name.localeCompare(b.name);return a.average-b.average||(a.best-b.best)||a.name.localeCompare(b.name);});
-let bestAll=rows.reduce((m,r)=>r.best!==null&&(m===null||r.best<m)?r.best:m,null);
-let html='<p class="small">Best lap assoluto della categoria: <strong class="best">'+timeFmt(bestAll)+'</strong></p><div class="table-wrap"><table><thead><tr><th>Pos.</th><th>Racer</th><th>Tempi registrati</th><th>Due migliori tempi</th><th>Media classifica (s)</th><th>Best lap (s)</th></tr></thead><tbody>';
-rows.forEach((r,i)=>{let two=r.topTimes.map(v=>v.toFixed(3)).join(" + ");html+='<tr><td class="rank">'+(r.topCount===2?i+1:"—")+'</td><td>'+esc(r.name)+'</td><td>'+r.count+'/4</td><td>'+(r.topCount?two:"—")+'</td><td>'+(r.average===null?"In attesa di 2 tempi":r.average.toFixed(3))+'</td><td class="'+(r.best===bestAll&&r.best!==null?"best":"")+'">'+(r.best===null?"—":r.best.toFixed(3))+'</td></tr>';});
-html+='</tbody></table></div><p class="small">Classifica ordinata dalla media più bassa dei due migliori tempi validi. Per entrare in classifica il racer deve avere almeno 2 tempi registrati; con un solo tempo il suo best lap è comunque mostrato.</p>';standings.innerHTML=html;}
+timings.querySelectorAll("input").forEach(inp=>inp.addEventListener("input",()=>{let n=inp.dataset.racer,r=inp.dataset.round;if(!s.times[n])s.times[n]={};s.times[n][r]=inp.value;persist();renderStandings();renderOverallRecord();}));
+renderStandings();renderOverallRecord();}
+function getCategoryRows(cat){let s=state[cat],ns=namesFrom(s.text);return ns.map(n=>{let vals=[];for(let r=1;r<=4;r++){let v=validTime(s.times[n]&&s.times[n][r]);if(v!==null)vals.push({time:v,round:r});}vals.sort((a,b)=>a.time-b.time);let top=vals.slice(0,2);return{name:n,count:vals.length,best:vals.length?vals[0].time:null,bestRound:vals.length?vals[0].round:null,topCount:top.length,average:top.length===2?(top[0].time+top[1].time)/2:null,topTimes:top};});}
+function renderOverallRecord(){let records=[];CATS.forEach(cat=>getCategoryRows(cat).forEach(r=>{if(r.best!==null)records.push({name:r.name,time:r.best,round:r.bestRound,cat});}));records.sort((a,b)=>a.time-b.time);if(!records.length){overallRecord.innerHTML='<div class="empty">Inserisci un tempo valido in una qualsiasi categoria per vedere il record generale.</div>';return;}let r=records[0],len=validTime(state.meta.trackLength),speed=len!==null?len/r.time:null;overallRecord.innerHTML='<div class="record-card"><div>BEST LAP ASSOLUTO</div><div class="record-time">'+r.time.toFixed(3)+' s</div><div class="record-name">'+esc(r.name)+'</div><div class="record-meta">Categoria '+LABELS[r.cat]+' · Manche '+r.round+'</div>'+(speed!==null?'<div style="margin-top:10px">Velocità media sul giro: <strong>'+speed.toFixed(3)+' m/s</strong> ('+(speed*3.6).toFixed(2)+' km/h)</div>':'<div class="record-meta" style="margin-top:10px">Inserisci la lunghezza pista per calcolare la velocità.</div>')+'</div>';}
+function renderStandings(){let s=state[current],ns=namesFrom(s.text);if(!s.rounds||!ns.length){standings.innerHTML='<div class="empty">Inserisci i racer e genera le manche.</div>';renderOverallRecord();return;}
+let rows=getCategoryRows(current);rows.sort((a,b)=>{if(a.average===null&&b.average!==null)return 1;if(b.average===null&&a.average!==null)return -1;if(a.average===null&&b.average===null)return a.name.localeCompare(b.name);return a.average-b.average||a.best-b.best||a.name.localeCompare(b.name);});
+let bestAll=rows.reduce((m,r)=>r.best!==null&&(m===null||r.best<m)?r.best:m,null),len=validTime(state.meta.trackLength);
+let html='<p class="small">Best lap assoluto della categoria: <strong class="best">'+timeFmt(bestAll)+'</strong></p><div class="table-wrap"><table><thead><tr><th>Pos.</th><th>Racer</th><th>Tempi registrati</th><th>Due migliori tempi</th><th>Media classifica (s)</th><th>Best lap (s)</th><th>Velocità media sul best lap</th></tr></thead><tbody>';
+rows.forEach((r,i)=>{let two=r.topTimes.map(v=>v.time.toFixed(3)).join(' + '),speed=len!==null&&r.best!==null?len/r.best:null;html+='<tr><td class="rank">'+(r.topCount===2?i+1:'—')+'</td><td>'+esc(r.name)+'</td><td>'+r.count+'/4</td><td>'+(r.topCount?two:'—')+'</td><td>'+(r.average===null?'In attesa di 2 tempi':r.average.toFixed(3))+'</td><td class="'+(r.best===bestAll&&r.best!==null?'best':'')+'">'+(r.best===null?'—':r.best.toFixed(3))+'</td><td>'+(speed===null?'Inserisci lunghezza pista':speed.toFixed(3)+' m/s ('+(speed*3.6).toFixed(2)+' km/h)')+'</td></tr>';});
+html+='</tbody></table></div><p class="small">La velocità è la media sul giro: lunghezza complessiva della pista divisa per il tempo del giro. La classifica resta ordinata per la media dei due migliori tempi validi.</p>';standings.innerHTML=html;renderOverallRecord();}
 function switchCat(c){state[current].text=area.value;persist();current=c;document.querySelectorAll("[data-cat]").forEach(b=>b.classList.toggle("active",b.dataset.cat===c));area.value=state[c].text||"";updateCount();renderBatteries();renderTimings();status.textContent="Categoria selezionata: "+LABELS[c]+".";}
 document.querySelectorAll("[data-cat]").forEach(b=>b.addEventListener("click",()=>switchCat(b.dataset.cat)));
 area.addEventListener("input",()=>{updateCount();state[current].rounds=null;renderBatteries();renderTimings();status.textContent="Elenco aggiornato. Rigenera le manche se hai modificato gli iscritti.";});
@@ -105,7 +111,7 @@ document.getElementById("generate").addEventListener("click",()=>{updateCount();
 document.getElementById("clear").addEventListener("click",()=>{if(!confirm("Cancellare iscritti, manche e tempi della categoria "+LABELS[current]+"?"))return;state[current]={text:"",rounds:null,times:{}};area.value="";updateCount();renderBatteries();renderTimings();status.textContent="Categoria svuotata.";});
 document.getElementById("downloadBackup").addEventListener("click",()=>{
   state[current].text=area.value;persist();
-  const backup={format:"mini4wd-palermo-backup",version:1,createdAt:new Date().toISOString(),data:state};
+  const backup={format:"mini4wd-palermo-backup",version:2,createdAt:new Date().toISOString(),data:state};
   const blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json;charset=utf-8"});
   const url=URL.createObjectURL(blob),a=document.createElement("a"),stamp=new Date().toISOString().slice(0,10);
   a.href=url;a.download="backup-gara-mini4wd-palermo-"+stamp+".json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -118,13 +124,13 @@ document.getElementById("backupFile").addEventListener("change",async ev=>{
     const parsed=JSON.parse(await file.text());const incoming=parsed&&parsed.format==="mini4wd-palermo-backup"?parsed.data:parsed;
     if(!incoming||typeof incoming!=="object"||!CATS.every(c=>incoming[c]&&typeof incoming[c].text==="string"&&incoming[c].times&&typeof incoming[c].times==="object"))throw new Error("Formato non valido");
     if(!confirm("Il backup sostituirà i dati attualmente presenti in questo sito. Vuoi continuare?"))return;
-    state={};CATS.forEach(c=>{const v=incoming[c];state[c]={text:v.text,rounds:Array.isArray(v.rounds)?v.rounds:null,times:v.times&&typeof v.times==="object"?v.times:{}};});
-    current="TMEC";persist();document.querySelectorAll("[data-cat]").forEach(b=>b.classList.toggle("active",b.dataset.cat===current));area.value=state[current].text||"";updateCount();renderBatteries();renderTimings();status.textContent="Backup ripristinato correttamente per tutte le categorie.";
+    state={meta:incoming.meta&&typeof incoming.meta==="object"?{trackLength:incoming.meta.trackLength||""}:{trackLength:""}};CATS.forEach(c=>{const v=incoming[c];state[c]={text:v.text,rounds:Array.isArray(v.rounds)?v.rounds:null,times:v.times&&typeof v.times==="object"?v.times:{}};});
+    trackLengthInput.value=state.meta.trackLength||"";current="TMEC";persist();document.querySelectorAll("[data-cat]").forEach(b=>b.classList.toggle("active",b.dataset.cat===current));area.value=state[current].text||"";trackLengthInput.value=state.meta.trackLength||"";updateCount();renderBatteries();renderTimings();renderOverallRecord();renderOverallRecord();status.textContent="Backup ripristinato correttamente per tutte le categorie e la lunghezza pista.";
   }catch(err){alert("Non riesco a leggere questo backup. Seleziona un file JSON scaricato da questo sito.");}
   finally{ev.target.value="";}
 });
 document.getElementById("print").addEventListener("click",()=>window.print());
-area.value=state[current].text||"";updateCount();renderBatteries();renderTimings();
+area.value=state[current].text||"";trackLengthInput.value=state.meta.trackLength||"";updateCount();renderBatteries();renderTimings();renderOverallRecord();
 })();
 </script>
 </body></html>
