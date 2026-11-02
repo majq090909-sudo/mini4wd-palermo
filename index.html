@@ -37,9 +37,8 @@ footer{text-align:center;color:var(--muted);font-size:.82rem;padding:8px}
   .hero,footer{grid-column:1/-1}
   .editor{grid-column:1;grid-row:2/ span 2;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
   .batteries-panel{grid-column:2;grid-row:2;max-height:42vh;overflow:auto}
-  .record-panel{grid-column:3;grid-row:2}
-  .timings-panel{grid-column:2;grid-row:3;max-height:48vh;overflow:auto}
-  .standings-panel{grid-column:3;grid-row:3;max-height:48vh;overflow:auto}
+  .timings-panel{grid-column:3;grid-row:2 / span 2;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
+  .standings-panel{grid-column:2;grid-row:3;max-height:48vh;overflow:auto}
   .panel{margin-bottom:0;padding:14px}
   .hero{margin-bottom:0;padding:18px 22px}
   .battery-grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
@@ -49,7 +48,7 @@ footer{text-align:center;color:var(--muted);font-size:.82rem;padding:8px}
 @media(min-width:760px) and (max-width:1099px){
   body>main.wrap{display:grid;grid-template-columns:minmax(260px,.75fr) minmax(0,1.25fr);gap:14px;align-items:start}
   .hero,footer{grid-column:1/-1}.editor{grid-column:1;grid-row:2/span 2;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
-  .batteries-panel{grid-column:2}.record-panel,.timings-panel,.standings-panel{grid-column:2}
+  .batteries-panel{grid-column:2;grid-row:2}.timings-panel{grid-column:2;grid-row:3}.standings-panel{grid-column:2;grid-row:4}
   .panel{margin-bottom:0}
 }
 @media(max-width:759px){.wrap{width:min(100% - 20px,700px);padding-top:10px}.layout{display:contents}.panel{margin-bottom:12px}}
@@ -58,7 +57,7 @@ footer{text-align:center;color:var(--muted);font-size:.82rem;padding:8px}
 </style>
 </head>
 <body><main class="wrap">
-<header class="hero"><div class="kicker">Gara Mini 4wd Palermo</div><h1>Gestione gara</h1><p>Batterie · Tempi · Best lap · Classifiche in tempo reale</p></header>
+<header class="hero"><div class="kicker">Gara Mini 4wd Palermo</div><h1>Gestione gara</h1><p>Batterie · Tempi · Velocità · Classifiche in tempo reale</p></header>
 <div class="layout">
 <section class="panel editor">
 <h2>1. Iscritti e batterie</h2>
@@ -77,8 +76,6 @@ footer{text-align:center;color:var(--muted);font-size:.82rem;padding:8px}
 <div id="batteries" style="margin-top:14px"><div class="empty">Inserisci i racer e genera le quattro manche.</div></div>
 </section>
 </div>
-<section class="panel record-panel">
-<div class="results-head"><h2 style="margin:0">Best lap generale live</h2><span class="pill">Tutte le categorie</span></div><div id="overallRecord"><div class="empty">Inserisci un tempo valido per vedere il record generale.</div></div></section>
 <section class="panel timings-panel">
 <div class="results-head"><h2 style="margin:0">3. Inserimento tempi</h2><span class="pill" id="timeCat">T-MEC</span></div>
 <p class="small">Inserisci il tempo registrato per ogni racer in ogni manche, in secondi (es. 23.451). Lascia vuoto se non ha un tempo. Il best lap è il tempo più basso registrato; la classifica provvisoria usa la media dei due migliori tempi validi di ogni racer, dal più basso al più alto. Servono almeno due tempi per entrare in classifica.</p>
@@ -98,7 +95,7 @@ let state={};try{state=JSON.parse(localStorage.getItem(KEY)||"{}")||{};}catch(e)
 if(!state.meta)state.meta={trackLength:""};
 CATS.forEach(c=>{if(!state[c])state[c]={text:"",rounds:null,times:{}};});
 let current="TMEC";
-const area=document.getElementById("racers"),count=document.getElementById("count"),status=document.getElementById("status"),trackLengthInput=document.getElementById("trackLength"),overallRecord=document.getElementById("overallRecord");
+const area=document.getElementById("racers"),count=document.getElementById("count"),status=document.getElementById("status"),trackLengthInput=document.getElementById("trackLength");
 trackLengthInput.value=state.meta.trackLength||"";
 trackLengthInput.addEventListener("input",()=>{state.meta.trackLength=trackLengthInput.value;persist();renderTimings();renderOverallRecord();});
 const batteries=document.getElementById("batteries"),timings=document.getElementById("timings"),standings=document.getElementById("standings");
@@ -132,13 +129,13 @@ function renderBatteries(){let s=state[current];document.getElementById("resultC
 let html="";s.rounds.forEach((groups,ri)=>{html+='<section class="round"><h3>Manche '+(ri+1)+'</h3><div class="battery-grid">';let bn=0;groups.forEach(g=>{let bye=g.length===1;if(!bye)bn++;let entries=g.map(item=>typeof item==="string"?{name:item,lane:null}:item);html+='<article class="battery"><h4>'+(bye?"Riposo":"Batteria "+bn)+'</h4><ol>'+entries.map(item=>'<li>'+esc(item.name)+(item.lane?' <span class="pill">Corsia '+item.lane+'</span>':'')+'</li>').join("")+'</ol></article>';});html+='</div></section>';});batteries.innerHTML=html;}
 function validTime(v){if(v===null||v===undefined||String(v).trim()==="")return null;let n=Number(String(v).trim().replace(",","."));return Number.isFinite(n)&&n>0?n:null;}
 function timeFmt(n){return n===null||n===undefined?"—":n.toFixed(3)+" s";}
-function renderTimings(){let s=state[current],ns=namesFrom(s.text);document.getElementById("timeCat").textContent=LABELS[current];if(!s.rounds||!ns.length){timings.innerHTML='<div class="empty">Genera prima le manche per creare la tabella dei tempi.</div>';renderStandings();return;}
+function renderTimings(){let s=state[current],ns=namesFrom(s.text).slice().sort((a,b)=>a.localeCompare(b,"it",{sensitivity:"base",numeric:true}));document.getElementById("timeCat").textContent=LABELS[current];if(!s.rounds||!ns.length){timings.innerHTML='<div class="empty">Genera prima le manche per creare la tabella dei tempi.</div>';renderStandings();return;}
 let html='<div class="table-wrap"><table class="time-table"><thead><tr><th>Racer</th><th>Manche 1 (s)</th><th>Manche 2 (s)</th><th>Manche 3 (s)</th><th>Manche 4 (s)</th></tr></thead><tbody>';
 ns.forEach(n=>{html+='<tr><td>'+esc(n)+'</td>';for(let r=1;r<=4;r++){let v=s.times[n]&&s.times[n][r]!==undefined?s.times[n][r]:"";html+='<td><input type="number" min="0" step="0.001" inputmode="decimal" aria-label="'+esc(n)+' manche '+r+'" data-racer="'+esc(n)+'" data-round="'+r+'" value="'+esc(String(v))+'" placeholder="es. 23.451"></td>';}html+='</tr>';});html+='</tbody></table></div>';timings.innerHTML=html;
 timings.querySelectorAll("input").forEach(inp=>inp.addEventListener("input",()=>{let n=inp.dataset.racer,r=inp.dataset.round;if(!s.times[n])s.times[n]={};s.times[n][r]=inp.value;persist();renderStandings();renderOverallRecord();}));
 renderStandings();renderOverallRecord();}
 function getCategoryRows(cat){let s=state[cat],ns=namesFrom(s.text);return ns.map(n=>{let vals=[];for(let r=1;r<=4;r++){let v=validTime(s.times[n]&&s.times[n][r]);if(v!==null)vals.push({time:v,round:r});}vals.sort((a,b)=>a.time-b.time);let top=vals.slice(0,2);return{name:n,count:vals.length,best:vals.length?vals[0].time:null,bestRound:vals.length?vals[0].round:null,topCount:top.length,average:top.length===2?(top[0].time+top[1].time)/2:null,topTimes:top};});}
-function renderOverallRecord(){let records=[];CATS.forEach(cat=>getCategoryRows(cat).forEach(r=>{if(r.best!==null)records.push({name:r.name,time:r.best,round:r.bestRound,cat});}));records.sort((a,b)=>a.time-b.time);if(!records.length){overallRecord.innerHTML='<div class="empty">Inserisci un tempo valido in una qualsiasi categoria per vedere il record generale.</div>';return;}let r=records[0],len=validTime(state.meta.trackLength),speed=len!==null?len/r.time:null;overallRecord.innerHTML='<div class="record-card"><div>BEST LAP ASSOLUTO</div><div class="record-time">'+r.time.toFixed(3)+' s</div><div class="record-name">'+esc(r.name)+'</div><div class="record-meta">Categoria '+LABELS[r.cat]+' · Manche '+r.round+'</div>'+(speed!==null?'<div style="margin-top:10px">Velocità media sul giro: <strong>'+speed.toFixed(3)+' m/s</strong> ('+(speed*3.6).toFixed(2)+' km/h)</div>':'<div class="record-meta" style="margin-top:10px">Inserisci la lunghezza pista per calcolare la velocità.</div>')+'</div>';}
+function renderOverallRecord(){}
 function renderStandings(){let s=state[current],ns=namesFrom(s.text);if(!s.rounds||!ns.length){standings.innerHTML='<div class="empty">Inserisci i racer e genera le manche.</div>';renderOverallRecord();return;}
 let rows=getCategoryRows(current);rows.sort((a,b)=>{if(a.average===null&&b.average!==null)return 1;if(b.average===null&&a.average!==null)return -1;if(a.average===null&&b.average===null)return a.name.localeCompare(b.name);return a.average-b.average||a.best-b.best||a.name.localeCompare(b.name);});
 let bestAll=rows.reduce((m,r)=>r.best!==null&&(m===null||r.best<m)?r.best:m,null),len=validTime(state.meta.trackLength);
