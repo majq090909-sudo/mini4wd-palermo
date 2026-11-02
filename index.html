@@ -76,6 +76,23 @@ footer{text-align:center;color:var(--muted);font-size:.82rem;padding:8px}
   .panel{margin-bottom:12px}
 }
 @media print{body{background:white}.wrap{width:100%;padding:0}.hero{background:white;color:black;padding:0}.hero p,.kicker,.editor,.no-print,footer{display:none!important}.panel{border:0;box-shadow:none;padding:0}.round{break-inside:avoid}.battery-grid{grid-template-columns:repeat(3,1fr)}}
+
+/* V13: classifica sempre completamente espansa; lo scorrimento resta alla pagina */
+@media (min-width:1000px) {
+  body > main.wrap { grid-auto-rows:auto; align-items:start; }
+  .standings-panel,
+  #standings,
+  .standings-panel .table-wrap {
+    height:auto !important;
+    min-height:0 !important;
+    max-height:none !important;
+    overflow:visible !important;
+  }
+  .standings-panel { align-self:start !important; }
+  .standings-panel .table-wrap { overflow-x:auto !important; overflow-y:visible !important; }
+  .standings-panel table { height:auto !important; }
+}
+
 </style>
 </head>
 <body><main class="wrap">
