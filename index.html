@@ -36,7 +36,8 @@ footer{text-align:center;color:var(--muted);font-size:.82rem;padding:8px}
   body>main.wrap{
     display:grid;
     grid-template-columns:minmax(250px,0.82fr) minmax(360px,1.12fr) minmax(420px,1.25fr);
-    grid-template-rows:auto minmax(240px,42vh) minmax(260px,1fr);
+    /* La riga della classifica cresce in base al contenuto: niente scroll interno */
+    grid-template-rows:auto minmax(240px,42vh) auto;
     grid-template-areas:
       "hero hero hero"
       "editor batteries timings"
@@ -48,7 +49,10 @@ footer{text-align:center;color:var(--muted);font-size:.82rem;padding:8px}
   .editor{grid-area:editor;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
   .batteries-panel{grid-area:batteries;max-height:42vh;overflow:auto}
   .timings-panel{grid-area:timings;position:sticky;top:12px;height:calc(100vh - 24px);max-height:calc(100vh - 24px);overflow:auto}
-  .standings-panel{grid-area:standings;max-height:48vh;overflow:auto}
+  /* Classifica completamente espansa: scorre la pagina, non il pannello */
+  .standings-panel{grid-area:standings;max-height:none;height:auto;overflow:visible;align-self:start}
+  .standings-panel .table-wrap{overflow-x:auto;overflow-y:visible;max-height:none}
+  .standings-panel table{width:100%}
   footer{grid-column:1/-1}
   .panel{margin:0;padding:14px;min-width:0}
   .hero{margin:0;padding:18px 22px}
