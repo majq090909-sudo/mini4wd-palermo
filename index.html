@@ -31,67 +31,53 @@ input[type="number"]{width:100%;min-width:75px;padding:9px;border:1px solid #cbd
 .time-table input{width:100px}.best{font-weight:800;color:#166534}.rank{font-weight:800}
 footer{text-align:center;color:var(--muted);font-size:.82rem;padding:8px}
 
-/* Layout dashboard: griglia esplicita per evitare che i pannelli cambino posizione */
+/* Layout dashboard V14: classifica in fondo, a tutta larghezza */
 @media(min-width:1000px){
   body>main.wrap{
     display:grid;
-    grid-template-columns:minmax(250px,0.82fr) minmax(360px,1.12fr) minmax(420px,1.25fr);
-    /* La riga della classifica cresce in base al contenuto: niente scroll interno */
-    grid-template-rows:auto minmax(240px,42vh) auto;
+    grid-template-columns:minmax(250px,.82fr) minmax(340px,1.08fr) minmax(420px,1.25fr);
+    grid-template-rows:auto auto auto;
     grid-template-areas:
       "hero hero hero"
       "editor batteries timings"
-      "editor standings timings";
+      "standings standings standings";
     gap:14px;
-    align-items:stretch;
+    align-items:start;
   }
   .hero{grid-area:hero}
-  .editor{grid-area:editor;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
-  .batteries-panel{grid-area:batteries;max-height:42vh;overflow:auto}
-  .timings-panel{grid-area:timings;position:sticky;top:12px;height:calc(100vh - 24px);max-height:calc(100vh - 24px);overflow:auto}
-  /* Classifica completamente espansa: scorre la pagina, non il pannello */
-  .standings-panel{grid-area:standings;max-height:none;height:auto;overflow:visible;align-self:start}
-  .standings-panel .table-wrap{overflow-x:auto;overflow-y:visible;max-height:none}
-  .standings-panel table{width:100%}
+  .editor{grid-area:editor;align-self:start}
+  .batteries-panel{grid-area:batteries;align-self:start;max-height:none;height:auto;overflow:visible}
+  .timings-panel{grid-area:timings;align-self:start;position:static;height:auto;max-height:none;overflow:visible}
+  .standings-panel{grid-area:standings;width:100%;max-width:none;height:auto;max-height:none;overflow:visible;align-self:start}
+  .standings-panel .table-wrap{height:auto;max-height:none;overflow-x:auto;overflow-y:visible}
+  .standings-panel table{width:100%;min-width:100%}
   footer{grid-column:1/-1}
   .panel{margin:0;padding:14px;min-width:0}
   .hero{margin:0;padding:18px 22px}
   .battery-grid{grid-template-columns:repeat(auto-fit,minmax(145px,1fr))}
-  .time-table{font-size:.82rem}.time-table th,.time-table td{padding:6px 5px}.time-table input{width:86px}
-  .record-card{margin:10px 0 0}
+  .time-table{font-size:.82rem}
+  .time-table th,.time-table td{padding:6px 5px}
+  .time-table input{width:86px}
 }
 @media(min-width:760px) and (max-width:999px){
   body>main.wrap{
     display:grid;
     grid-template-columns:minmax(240px,.8fr) minmax(0,1.2fr);
-    grid-template-areas:"hero hero" "editor batteries" "editor timings" "standings standings" "footer footer";
+    grid-template-areas:"hero hero" "editor batteries" "timings timings" "standings standings" "footer footer";
     gap:14px;align-items:start
   }
-  .hero{grid-area:hero}.editor{grid-area:editor;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
-  .batteries-panel{grid-area:batteries}.timings-panel{grid-area:timings}.standings-panel{grid-area:standings}footer{grid-area:footer}
+  .hero{grid-area:hero}.editor{grid-area:editor}.batteries-panel{grid-area:batteries}
+  .timings-panel{grid-area:timings}.standings-panel{grid-area:standings}
+  footer{grid-area:footer}
   .panel{margin:0;min-width:0}
+  .standings-panel,.standings-panel .table-wrap{height:auto;max-height:none;overflow:visible}
 }
 @media(max-width:759px){
   .wrap{width:min(100% - 20px,700px);padding-top:10px}
   .panel{margin-bottom:12px}
+  .standings-panel,.standings-panel .table-wrap{height:auto;max-height:none;overflow:visible}
 }
 @media print{body{background:white}.wrap{width:100%;padding:0}.hero{background:white;color:black;padding:0}.hero p,.kicker,.editor,.no-print,footer{display:none!important}.panel{border:0;box-shadow:none;padding:0}.round{break-inside:avoid}.battery-grid{grid-template-columns:repeat(3,1fr)}}
-
-/* V13: classifica sempre completamente espansa; lo scorrimento resta alla pagina */
-@media (min-width:1000px) {
-  body > main.wrap { grid-auto-rows:auto; align-items:start; }
-  .standings-panel,
-  #standings,
-  .standings-panel .table-wrap {
-    height:auto !important;
-    min-height:0 !important;
-    max-height:none !important;
-    overflow:visible !important;
-  }
-  .standings-panel { align-self:start !important; }
-  .standings-panel .table-wrap { overflow-x:auto !important; overflow-y:visible !important; }
-  .standings-panel table { height:auto !important; }
-}
 
 </style>
 </head>
