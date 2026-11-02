@@ -31,34 +31,51 @@ input[type="number"]{width:100%;min-width:75px;padding:9px;border:1px solid #cbd
 .time-table input{width:100px}.best{font-weight:800;color:#166534}.rank{font-weight:800}
 footer{text-align:center;color:var(--muted);font-size:.82rem;padding:8px}
 
-/* Dashboard responsive: desktop uses the full width instead of a long single column */
-@media(min-width:1100px){
-  body>main.wrap{display:grid;grid-template-columns:minmax(260px,300px) minmax(420px,1.15fr) minmax(380px,1fr);gap:14px;align-items:start}
-  .hero,footer{grid-column:1/-1}
-  .editor{grid-column:1;grid-row:2/ span 2;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
-  .batteries-panel{grid-column:2;grid-row:2;max-height:42vh;overflow:auto}
-  .timings-panel{grid-column:3;grid-row:2 / span 2;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
-  .standings-panel{grid-column:2;grid-row:3;max-height:48vh;overflow:auto}
-  .panel{margin-bottom:0;padding:14px}
-  .hero{margin-bottom:0;padding:18px 22px}
-  .battery-grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+/* Layout dashboard: griglia esplicita per evitare che i pannelli cambino posizione */
+@media(min-width:1000px){
+  body>main.wrap{
+    display:grid;
+    grid-template-columns:minmax(250px,0.82fr) minmax(360px,1.12fr) minmax(420px,1.25fr);
+    grid-template-rows:auto minmax(240px,42vh) minmax(260px,1fr);
+    grid-template-areas:
+      "hero hero hero"
+      "editor batteries timings"
+      "editor standings timings";
+    gap:14px;
+    align-items:stretch;
+  }
+  .hero{grid-area:hero}
+  .editor{grid-area:editor;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
+  .batteries-panel{grid-area:batteries;max-height:42vh;overflow:auto}
+  .timings-panel{grid-area:timings;position:sticky;top:12px;height:calc(100vh - 24px);max-height:calc(100vh - 24px);overflow:auto}
+  .standings-panel{grid-area:standings;max-height:48vh;overflow:auto}
+  footer{grid-column:1/-1}
+  .panel{margin:0;padding:14px;min-width:0}
+  .hero{margin:0;padding:18px 22px}
+  .battery-grid{grid-template-columns:repeat(auto-fit,minmax(145px,1fr))}
   .time-table{font-size:.82rem}.time-table th,.time-table td{padding:6px 5px}.time-table input{width:86px}
   .record-card{margin:10px 0 0}
 }
-@media(min-width:760px) and (max-width:1099px){
-  body>main.wrap{display:grid;grid-template-columns:minmax(260px,.75fr) minmax(0,1.25fr);gap:14px;align-items:start}
-  .hero,footer{grid-column:1/-1}.editor{grid-column:1;grid-row:2/span 2;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
-  .batteries-panel{grid-column:2;grid-row:2}.timings-panel{grid-column:2;grid-row:3}.standings-panel{grid-column:2;grid-row:4}
-  .panel{margin-bottom:0}
+@media(min-width:760px) and (max-width:999px){
+  body>main.wrap{
+    display:grid;
+    grid-template-columns:minmax(240px,.8fr) minmax(0,1.2fr);
+    grid-template-areas:"hero hero" "editor batteries" "editor timings" "standings standings" "footer footer";
+    gap:14px;align-items:start
+  }
+  .hero{grid-area:hero}.editor{grid-area:editor;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
+  .batteries-panel{grid-area:batteries}.timings-panel{grid-area:timings}.standings-panel{grid-area:standings}footer{grid-area:footer}
+  .panel{margin:0;min-width:0}
 }
-@media(max-width:759px){.wrap{width:min(100% - 20px,700px);padding-top:10px}.layout{display:contents}.panel{margin-bottom:12px}}
-
+@media(max-width:759px){
+  .wrap{width:min(100% - 20px,700px);padding-top:10px}
+  .panel{margin-bottom:12px}
+}
 @media print{body{background:white}.wrap{width:100%;padding:0}.hero{background:white;color:black;padding:0}.hero p,.kicker,.editor,.no-print,footer{display:none!important}.panel{border:0;box-shadow:none;padding:0}.round{break-inside:avoid}.battery-grid{grid-template-columns:repeat(3,1fr)}}
 </style>
 </head>
 <body><main class="wrap">
 <header class="hero"><div class="kicker">Gara Mini 4wd Palermo</div><h1>Gestione gara</h1><p>Batterie · Tempi · Velocità · Classifiche in tempo reale</p></header>
-<div class="layout">
 <section class="panel editor">
 <h2>1. Iscritti e batterie</h2>
 <div class="tabs"><button type="button" data-cat="TMEC" class="active">T-MEC</button><button type="button" data-cat="EXPERT">EXPERT</button><button type="button" data-cat="OPEN">OPEN</button></div>
@@ -75,7 +92,6 @@ footer{text-align:center;color:var(--muted);font-size:.82rem;padding:8px}
 <div class="results-head"><h2 style="margin:0">2. Batterie</h2><span class="pill" id="resultCat">T-MEC</span></div>
 <div id="batteries" style="margin-top:14px"><div class="empty">Inserisci i racer e genera le quattro manche.</div></div>
 </section>
-</div>
 <section class="panel timings-panel">
 <div class="results-head"><h2 style="margin:0">3. Inserimento tempi</h2><span class="pill" id="timeCat">T-MEC</span></div>
 <p class="small">Inserisci il tempo registrato per ogni racer in ogni manche, in secondi (es. 23.451). Lascia vuoto se non ha un tempo. Il best lap è il tempo più basso registrato; la classifica provvisoria usa la media dei due migliori tempi validi di ogni racer, dal più basso al più alto. Servono almeno due tempi per entrare in classifica.</p>
