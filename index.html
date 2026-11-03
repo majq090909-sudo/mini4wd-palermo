@@ -79,7 +79,7 @@ footer{text-align:center;color:var(--muted);font-size:.82rem;padding:8px}
 <div id="count" class="count">0 racer inseriti</div>
 <div class="actions"><button type="button" id="generate" class="primary">Rigenera batterie</button><button type="button" id="clear">Svuota categoria</button></div>
 <div class="round-controls"><span>Numero manche: <strong id="roundCountDisplay">4</strong> / 6</span><div class="round-control-buttons"><button type="button" id="decreaseRounds" aria-label="Diminuisci manche">−</button><button type="button" id="increaseRounds" aria-label="Aumenta manche">+</button></div><p class="small">Puoi modificare il numero anche a gara in corso. I tempi già inseriti vengono conservati, anche se riduci temporaneamente le manche.</p></div>
-<div class="panel" style="padding:12px;margin-top:14px;background:#f8fafc"><h3>Impostazioni evento</h3><label for="trackLength">Lunghezza complessiva della pista (metri)</label><input type="number" id="trackLength" min="0.001" step="0.001" inputmode="decimal" placeholder="Es. 38"/><p class="small">Imposta la lunghezza una sola volta: verrà usata per T-MEC, Expert e Open e sarà inclusa nel backup della gara. Per un evento futuro potrai modificarla.</p></div><div class="actions"><button type="button" id="downloadBackup" class="primary">Scarica backup gara</button><button type="button" id="restoreBackup">Ripristina backup</button><input type="file" id="backupFile" accept=".json,application/json" hidden></div>
+<div class="panel" style="padding:12px;margin-top:14px;background:#f8fafc"><h3>Impostazioni evento</h3><label for="trackLength">Lunghezza complessiva della pista (metri)</label><input type="number" id="trackLength" min="0.001" step="0.001" inputmode="decimal" placeholder="Es. 38"/><p class="small">Imposta la lunghezza una sola volta: verrà usata per T-MEC, Expert e Open e sarà inclusa nel backup della gara. Per un evento futuro potrai modificarla.</p></div><div class="actions"><button type="button" id="downloadBackup" class="primary">Scarica backup gara</button><button type="button" id="downloadResultsImage">Scarica immagine tempi e classifiche</button><button type="button" id="restoreBackup">Ripristina backup</button><input type="file" id="backupFile" accept=".json,application/json" hidden></div>
 <div class="actions"><button type="button" id="print">Stampa pagina</button></div>
 <div id="status" class="status">Scrivi i nomi, uno per riga. I conteggi e le classifiche si aggiornano automaticamente.</div>
 <p class="small">Elenchi e risultati sono salvati nel browser di questo dispositivo. Usa “Scarica backup gara” per conservare tutti i dati in un file JSON; potrai ricaricarlo con “Ripristina backup”. Non vengono sincronizzati automaticamente con altri telefoni.</p>
@@ -176,6 +176,92 @@ document.getElementById("downloadBackup").addEventListener("click",()=>{
   a.href=url;a.download="backup-gara-mini4wd-palermo-"+stamp+".json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
   status.textContent="Backup scaricato. Conserva il file in File/iCloud Drive o in un altro posto sicuro.";
 });
+
+function downloadResultsImage(){
+  state[current].text=area.value;persist();
+  const scale=2, W=1900, pad=64, lineH=42, titleH=100, sectionGap=54;
+  const canvas=document.createElement("canvas"),ctx=canvas.getContext("2d");
+  const sections=CATS.map(cat=>{
+    const s=state[cat],roundCount=selectedRoundCountFor(cat);
+    const names=namesFrom(s.text);
+    let rows=getCategoryRows(cat);
+    rows.sort((a,b)=>{
+      if(a.average===null&&b.average!==null)return 1;
+      if(b.average===null&&a.average!==null)return -1;
+      if(a.average===null&&b.average===null)return a.name.localeCompare(b.name,"it");
+      return a.average-b.average||a.best-b.best||a.name.localeCompare(b.name,"it");
+    });
+    const bestAll=rows.reduce((m,r)=>r.best!==null&&(m===null||r.best<m)?r.best:m,null);
+    const columns=[
+      {label:"POS.",width:76,cell:(r,i)=>r.topCount===2?String(i+1):"—"},
+      {label:"RACER",width:250,cell:r=>r.name},
+      ...Array.from({length:roundCount},(_,i)=>({label:"M"+(i+1),width:112,cell:r=>{let v=s.times[r.name]&&s.times[r.name][i+1];let n=validTime(v);return n===null?"—":n.toFixed(3);}})),
+      {label:"PUNTI",width:100,cell:(r,i)=>r.topCount!==2?"—":String(i<CHAMP_POINTS.length?CHAMP_POINTS[i]:0)},
+      {label:"TEMPI",width:90,cell:r=>r.count+"/"+roundCount},
+      {label:"2 MIGLIORI",width:210,cell:r=>r.topTimes.length?r.topTimes.map(v=>v.time.toFixed(3)).join(" + "):"—"},
+      {label:"MEDIA",width:130,cell:r=>r.average===null?"In attesa":r.average.toFixed(3)},
+      {label:"BEST LAP",width:130,cell:r=>r.best===null?"—":r.best.toFixed(3)},
+      {label:"VELOCITÀ",width:190,cell:r=>{let len=validTime(state.meta.trackLength);return len===null||r.best===null?"—":(len/r.best).toFixed(3)+" m/s";}}
+    ];
+    const totalWidth=columns.reduce((a,c)=>a+c.width,0);
+    return {cat,s,rows,bestAll,columns,totalWidth,roundCount,names};
+  });
+  const tableWidth=Math.max(...sections.map(s=>s.totalWidth));
+  const totalRows=sections.reduce((sum,s)=>sum+Math.max(1,s.rows.length),0);
+  const H=pad+titleH+sections.length*(lineH*2+sectionGap)+totalRows*lineH+pad+90;
+  canvas.width=tableWidth*scale;canvas.height=H*scale;
+  ctx.scale(scale,scale);
+  ctx.fillStyle="#f1f5f9";ctx.fillRect(0,0,tableWidth,H);
+  let y=pad;
+  ctx.fillStyle="#111827";ctx.font="bold 46px Arial";ctx.fillText("GARA MINI 4WD PALERMO",pad,y+42);
+  ctx.font="24px Arial";ctx.fillStyle="#475569";
+  ctx.fillText("Tempi e classifiche complete · "+new Date().toLocaleDateString("it-IT"),pad,y+80);
+  y+=titleH;
+  sections.forEach(sec=>{
+    ctx.fillStyle="#111827";ctx.fillRect(pad,y,tableWidth-pad*2,54);
+    ctx.fillStyle="#ffffff";ctx.font="bold 30px Arial";ctx.fillText(sec.cat==="TMEC"?"T-MEC":sec.cat,y+0+pad+16,y+38);
+    ctx.font="18px Arial";ctx.fillStyle="#dbeafe";
+    ctx.fillText("Manche attive: "+sec.roundCount+" · Best lap categoria: "+(sec.bestAll===null?"—":sec.bestAll.toFixed(3)+" s"),pad+280,y+35);
+    y+=64;
+    let x=pad;
+    ctx.fillStyle="#dbeafe";ctx.fillRect(pad,y,tableWidth-pad*2,lineH);
+    sec.columns.forEach(col=>{
+      ctx.fillStyle="#1e293b";ctx.font="bold 16px Arial";
+      ctx.fillText(col.label,x+8,y+27);
+      x+=col.width;
+    });
+    y+=lineH;
+    if(!sec.rows.length){
+      ctx.fillStyle="#64748b";ctx.font="18px Arial";ctx.fillText("Nessun iscritto o nessun risultato disponibile.",pad+8,y+27);y+=lineH;
+    }else{
+      sec.rows.forEach((r,i)=>{
+        ctx.fillStyle=i%2===0?"#ffffff":"#eaf0f6";
+        ctx.fillRect(pad,y,tableWidth-pad*2,lineH);
+        x=pad;
+        sec.columns.forEach(col=>{
+          ctx.save();ctx.beginPath();ctx.rect(x+5,y+2,col.width-10,lineH-4);ctx.clip();
+          ctx.fillStyle="#111827";ctx.font=col.label==="RACER"?"bold 17px Arial":"16px Arial";
+          let val=String(col.cell(r,i));
+          ctx.fillText(val,x+8,y+27);
+          ctx.restore();x+=col.width;
+        });
+        y+=lineH;
+      });
+    }
+    y+=sectionGap;
+  });
+  ctx.fillStyle="#64748b";ctx.font="16px Arial";
+  ctx.fillText("Classifica basata sulla media dei due migliori tempi validi. Velocità calcolata sulla lunghezza pista impostata.",pad,H-32);
+  canvas.toBlob(blob=>{
+    if(!blob){alert("Non è stato possibile creare l'immagine.");return;}
+    const url=URL.createObjectURL(blob),a=document.createElement("a");
+    a.href=url;a.download="gara-mini4wd-tempi-classifiche-"+new Date().toISOString().slice(0,10)+".png";
+    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+    status.textContent="Immagine completa dei tempi e delle classifiche scaricata.";
+  },"image/png");
+}
+document.getElementById("downloadResultsImage").addEventListener("click",downloadResultsImage);
+
 document.getElementById("restoreBackup").addEventListener("click",()=>document.getElementById("backupFile").click());
 document.getElementById("backupFile").addEventListener("change",async ev=>{
   const file=ev.target.files&&ev.target.files[0];if(!file)return;
