@@ -31,34 +31,48 @@ input[type="number"]{width:100%;min-width:75px;padding:9px;border:1px solid #cbd
 .time-table input{width:100px}.best{font-weight:800;color:#166534}.rank{font-weight:800}.card-actions{display:flex;gap:4px}.card-btn{padding:5px 8px;font-size:.85rem;border-radius:8px}.card-btn.yellow.selected{background:#fef3c7;border-color:#eab308}.card-btn.red.selected{background:#fee2e2;border-color:#ef4444}.penalty{color:#b91c1c;font-weight:800}.bonus{color:#166534;font-weight:800}
 footer{text-align:center;color:var(--muted);font-size:.82rem;padding:8px}
 
-/* Dashboard responsive: desktop uses the full width instead of a long single column */
-@media(min-width:1100px){
-  body>main.wrap{display:grid;grid-template-columns:minmax(260px,300px) minmax(420px,1.15fr) minmax(380px,1fr);gap:14px;align-items:start}
-  .hero,footer{grid-column:1/-1}
-  .editor{grid-column:1;grid-row:2/ span 2;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
-  .batteries-panel{grid-column:2;grid-row:2;max-height:42vh;overflow:auto}
-  .record-panel{grid-column:3;grid-row:2}
-  .timings-panel{grid-column:2;grid-row:3;max-height:48vh;overflow:auto}
-  .standings-panel{grid-column:3;grid-row:3;max-height:48vh;overflow:auto}
+/* Layout gara: sinistra iscritti/impostazioni, destra batterie e tempi, classifica a tutta larghezza in basso */
+@media(min-width:760px){
+  body>main.wrap{
+    display:grid;
+    grid-template-columns:minmax(260px,310px) minmax(0,1fr);
+    grid-template-areas:
+      "hero hero"
+      "editor batteries"
+      "editor timings"
+      "standings standings"
+      "footer footer";
+    gap:14px;
+    align-items:start;
+  }
+  .hero{grid-area:hero}
+  .editor{grid-area:editor;align-self:stretch;max-height:calc(100vh - 110px);overflow:auto;position:sticky;top:12px}
+  .batteries-panel{grid-area:batteries;max-height:36vh;overflow:auto}
+  .timings-panel{grid-area:timings;max-height:43vh;overflow:auto}
+  .standings-panel{grid-area:standings;width:100%;max-height:none;overflow:visible}
+  footer{grid-area:footer}
   .panel{margin-bottom:0;padding:14px}
   .hero{margin-bottom:0;padding:18px 22px}
-  .battery-grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
-  .time-table{font-size:.82rem}.time-table th,.time-table td{padding:6px 5px}.time-table input{width:86px}
-  .record-card{margin:10px 0 0}
+  .battery-grid{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+  .time-table{font-size:.86rem}
+  .time-table th,.time-table td{padding:7px 6px}
+  .time-table input{width:90px}
 }
-@media(min-width:760px) and (max-width:1099px){
-  body>main.wrap{display:grid;grid-template-columns:minmax(260px,.75fr) minmax(0,1.25fr);gap:14px;align-items:start}
-  .hero,footer{grid-column:1/-1}.editor{grid-column:1;grid-row:2/span 2;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
-  .batteries-panel{grid-column:2}.record-panel,.timings-panel,.standings-panel{grid-column:2}
-  .panel{margin-bottom:0}
+@media(min-width:1200px){
+  body>main.wrap{grid-template-columns:minmax(280px,320px) minmax(0,1fr)}
+  .batteries-panel{max-height:34vh}
+  .timings-panel{max-height:42vh}
 }
-@media(max-width:759px){.wrap{width:min(100% - 20px,700px);padding-top:10px}.layout{display:contents}.panel{margin-bottom:12px}}
-
+@media(max-width:759px){
+  .wrap{width:min(100% - 20px,700px);padding-top:10px}
+  .layout{display:contents}
+  .panel{margin-bottom:12px}
+}
 @media print{body{background:white}.wrap{width:100%;padding:0}.hero{background:white;color:black;padding:0}.hero p,.kicker,.editor,.no-print,footer{display:none!important}.panel{border:0;box-shadow:none;padding:0}.round{break-inside:avoid}.battery-grid{grid-template-columns:repeat(3,1fr)}}
 </style>
 </head>
 <body><main class="wrap">
-<header class="hero"><div class="kicker">Gara Mini 4wd Palermo</div><h1>Gestione gara</h1><p>Batterie · Tempi · Best lap · Classifiche in tempo reale</p></header>
+<header class="hero"><div class="kicker">Gara Mini 4wd Palermo</div><h1>Gestione gara</h1><p>Batterie · Tempi · Classifica provvisoria in tempo reale</p></header>
 <div class="layout">
 <section class="panel editor">
 <h2>1. Iscritti e batterie</h2>
@@ -66,8 +80,8 @@ footer{text-align:center;color:var(--muted);font-size:.82rem;padding:8px}
 <label for="racers">Racer iscritti — uno per riga</label>
 <textarea id="racers" placeholder="Marco&#10;Cuci&#10;Pepa&#10;Coco&#10;Luna" autocapitalize="words" spellcheck="false"></textarea>
 <div id="count" class="count">0 racer inseriti</div>
-<div class="actions"><button type="button" id="generate" class="primary">Genera 4 manche</button><button type="button" id="clear">Svuota categoria</button></div>
-<div class="panel" style="padding:12px;margin-top:14px;background:#f8fafc"><h3>Impostazioni evento</h3><label for="trackLength">Lunghezza complessiva della pista (metri)</label><input type="number" id="trackLength" min="0.001" step="0.001" inputmode="decimal" placeholder="Es. 38"/><p class="small">Imposta la lunghezza una sola volta: verrà usata per T-MEC, Expert e Open e sarà inclusa nel backup della gara. Per un evento futuro potrai modificarla.</p></div><div class="actions"><button type="button" id="downloadBackup" class="primary">Scarica backup gara</button><button type="button" id="restoreBackup">Ripristina backup</button><input type="file" id="backupFile" accept=".json,application/json" hidden></div>
+<div class="actions"><button type="button" id="generate" class="primary">Genera manche</button><button type="button" id="clear">Svuota categoria</button></div>
+<div class="panel" style="padding:12px;margin-top:14px;background:#f8fafc"><h3>Impostazioni evento</h3><label for="trackLength">Lunghezza complessiva della pista (metri)</label><input type="number" id="trackLength" min="0.001" step="0.001" inputmode="decimal" placeholder="Es. 38"/><p class="small">Imposta la lunghezza una sola volta: verrà usata per T-MEC, Expert e Open e sarà inclusa nel backup della gara. Per un evento futuro potrai modificarla.</p><label for="roundCount">Numero di manche per categoria</label><div class="actions" style="margin-top:4px"><button type="button" id="roundMinus">−</button><input type="number" id="roundCount" min="1" max="20" step="1" value="4" style="max-width:90px;text-align:center"><button type="button" id="roundPlus">+</button></div><p class="small">Puoi cambiare il numero di manche anche a gara in corso. Se diminuisci, le manche nascoste e i relativi tempi restano conservati; se aumenti di nuovo, li ritroverai.</p></div><div class="actions"><button type="button" id="downloadBackup" class="primary">Scarica backup gara</button><button type="button" id="restoreBackup">Ripristina backup</button><input type="file" id="backupFile" accept=".json,application/json" hidden></div><div class="actions"><button type="button" id="exportImage" class="primary">Scarica riepilogo gara (PNG)</button></div>
 <div class="actions"><button type="button" id="print">Stampa pagina</button></div>
 <div id="status" class="status">Scrivi i nomi, uno per riga. I conteggi e le classifiche si aggiornano automaticamente.</div>
 <p class="small">Elenchi e risultati sono salvati nel browser di questo dispositivo. Usa “Scarica backup gara” per conservare tutti i dati in un file JSON; potrai ricaricarlo con “Ripristina backup”. Non vengono sincronizzati automaticamente con altri telefoni.</p>
@@ -77,8 +91,6 @@ footer{text-align:center;color:var(--muted);font-size:.82rem;padding:8px}
 <div id="batteries" style="margin-top:14px"><div class="empty">Inserisci i racer e genera le quattro manche.</div></div>
 </section>
 </div>
-<section class="panel record-panel">
-<div class="results-head"><h2 style="margin:0">Best lap generale live</h2><span class="pill">Tutte le categorie</span></div><div id="overallRecord"><div class="empty">Inserisci un tempo valido per vedere il record generale.</div></div></section>
 <section class="panel timings-panel">
 <div class="results-head"><h2 style="margin:0">3. Inserimento tempi</h2><span class="pill" id="timeCat">T-MEC</span></div>
 <p class="small">Inserisci il tempo registrato per ogni racer in ogni manche, in secondi (es. 23.451). Lascia vuoto se non ha un tempo. Il best lap è il tempo più basso registrato; la classifica provvisoria usa la media dei due migliori tempi validi di ogni racer, dal più basso al più alto. Servono almeno due tempi per entrare in classifica.</p>
@@ -95,10 +107,12 @@ footer{text-align:center;color:var(--muted);font-size:.82rem;padding:8px}
 "use strict";
 const CATS=["TMEC","EXPERT","OPEN"],LABELS={TMEC:"T-MEC",EXPERT:"EXPERT",OPEN:"OPEN"},CHAMP_POINTS=[25,18,15,12,10,8,6,4,2,1],KEY="mini4wd-palermo-race-v2";
 let state={};try{state=JSON.parse(localStorage.getItem(KEY)||"{}")||{};}catch(e){state={};}
-if(!state.meta)state.meta={trackLength:""};
+if(!state.meta)state.meta={trackLength:"",roundCount:4};
+if(!state.meta.roundCount)state.meta.roundCount=4;
 CATS.forEach(c=>{if(!state[c])state[c]={text:"",rounds:null,times:{},cards:{}};if(!state[c].cards)state[c].cards={};});
 let current="TMEC";
-const area=document.getElementById("racers"),count=document.getElementById("count"),status=document.getElementById("status"),trackLengthInput=document.getElementById("trackLength"),overallRecord=document.getElementById("overallRecord");
+const area=document.getElementById("racers"),count=document.getElementById("count"),status=document.getElementById("status"),trackLengthInput=document.getElementById("trackLength"),roundCountInput=document.getElementById("roundCount"),overallRecord=document.createElement("div");
+roundCountInput.value=state.meta.roundCount;
 trackLengthInput.value=state.meta.trackLength||"";
 trackLengthInput.addEventListener("input",()=>{state.meta.trackLength=trackLengthInput.value;persist();renderTimings();renderOverallRecord();});
 const batteries=document.getElementById("batteries"),timings=document.getElementById("timings"),standings=document.getElementById("standings");
@@ -108,11 +122,12 @@ function updateCount(){state[current].text=area.value;let raw=area.value.split(/
 function esc(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t;}return a;}
 function partition(a){let g=[],i=0;if(a.length%3===1&&a.length>=4){while(a.length-i>4){g.push(a.slice(i,i+3));i+=3;}g.push(a.slice(i,i+2),a.slice(i+2,i+4));i+=4;}while(i<a.length){let left=a.length-i,size=Math.min(3,left);g.push(a.slice(i,i+size));i+=size;}return g;}
-function makeSchedule(ns){
+function makeSchedule(ns,roundCount=Number(state.meta.roundCount)||4,startRound=0){
 // Ogni racer ruota di una corsia a ogni manche: 1-2-3-1.
 // Le batterie vengono composte abbinando racer assegnati a corsie diverse.
 let pairs=new Map(),rounds=[];
-for(let r=0;r<4;r++){
+for(let rr=0;rr<roundCount;rr++){
+ let r=startRound+rr;
  let lanes=[[],[],[]];
  ns.forEach((name,i)=>{let lane=(i+r)%3;lanes[lane].push({name,lane:lane+1});});
  let best=null,bestScore=Infinity;
@@ -129,27 +144,48 @@ for(let r=0;r<4;r++){
 return rounds;
 }
 function renderBatteries(){let s=state[current];document.getElementById("resultCat").textContent=LABELS[current];if(!s.rounds){batteries.innerHTML='<div class="empty">Inserisci i racer e genera le quattro manche.</div>';return;}
-let html="";s.rounds.forEach((groups,ri)=>{html+='<section class="round"><h3>Manche '+(ri+1)+'</h3><div class="battery-grid">';let bn=0;groups.forEach(g=>{let bye=g.length===1;if(!bye)bn++;let entries=g.map(item=>typeof item==="string"?{name:item,lane:null}:item);html+='<article class="battery"><h4>'+(bye?"Riposo":"Batteria "+bn)+'</h4><ol>'+entries.map(item=>'<li>'+esc(item.name)+(item.lane?' <span class="pill">Corsia '+item.lane+'</span>':'')+'</li>').join("")+'</ol></article>';});html+='</div></section>';});batteries.innerHTML=html;}
+let html="";s.rounds.slice(0,Number(state.meta.roundCount)||4).forEach((groups,ri)=>{html+='<section class="round"><h3>Manche '+(ri+1)+'</h3><div class="battery-grid">';let bn=0;groups.forEach(g=>{let bye=g.length===1;if(!bye)bn++;let entries=g.map(item=>typeof item==="string"?{name:item,lane:null}:item);html+='<article class="battery"><h4>'+(bye?"Riposo":"Batteria "+bn)+'</h4><ol>'+entries.map(item=>'<li>'+esc(item.name)+(item.lane?' <span class="pill">Corsia '+item.lane+'</span>':'')+'</li>').join("")+'</ol></article>';});html+='</div></section>';});batteries.innerHTML=html;}
 function validTime(v){if(v===null||v===undefined||String(v).trim()==="")return null;let n=Number(String(v).trim().replace(",","."));return Number.isFinite(n)&&n>0?n:null;}
 function timeFmt(n){return n===null||n===undefined?"—":n.toFixed(3)+" s";}
 function renderTimings(){let s=state[current],ns=namesFrom(s.text);document.getElementById("timeCat").textContent=LABELS[current];if(!s.rounds||!ns.length){timings.innerHTML='<div class="empty">Genera prima le manche per creare la tabella dei tempi.</div>';renderStandings();return;}
-let html='<div class="table-wrap"><table class="time-table"><thead><tr><th>Racer</th><th>Manche 1 (s)</th><th>Manche 2 (s)</th><th>Manche 3 (s)</th><th>Manche 4 (s)</th></tr></thead><tbody>';
-ns.forEach(n=>{html+='<tr><td>'+esc(n)+'</td>';for(let r=1;r<=4;r++){let v=s.times[n]&&s.times[n][r]!==undefined?s.times[n][r]:"";html+='<td><input type="number" min="0" step="0.001" inputmode="decimal" aria-label="'+esc(n)+' manche '+r+'" data-racer="'+esc(n)+'" data-round="'+r+'" value="'+esc(String(v))+'" placeholder="es. 23.451"></td>';}html+='</tr>';});html+='</tbody></table></div>';timings.innerHTML=html;
+let roundCount=Number(state.meta.roundCount)||4;
+let html='<div class="table-wrap"><table class="time-table"><thead><tr><th>Racer</th>'+Array.from({length:roundCount},(_,i)=>'<th>Manche '+(i+1)+' (s)</th>').join('')+'</tr></thead><tbody>';
+ns.forEach(n=>{html+='<tr><td>'+esc(n)+'</td>';for(let r=1;r<=roundCount;r++){let v=s.times[n]&&s.times[n][r]!==undefined?s.times[n][r]:"";html+='<td><input type="number" min="0" step="0.001" inputmode="decimal" aria-label="'+esc(n)+' manche '+r+'" data-racer="'+esc(n)+'" data-round="'+r+'" value="'+esc(String(v))+'" placeholder="es. 23.451"></td>';}html+='</tr>';});html+='</tbody></table></div>';timings.innerHTML=html;
 timings.querySelectorAll("input").forEach(inp=>inp.addEventListener("input",()=>{let n=inp.dataset.racer,r=inp.dataset.round;if(!s.times[n])s.times[n]={};s.times[n][r]=inp.value;persist();renderStandings();renderOverallRecord();}));
 renderStandings();renderOverallRecord();}
-function getCategoryRows(cat){let s=state[cat],ns=namesFrom(s.text);return ns.map(n=>{let vals=[];for(let r=1;r<=4;r++){let v=validTime(s.times[n]&&s.times[n][r]);if(v!==null)vals.push({time:v,round:r});}vals.sort((a,b)=>a.time-b.time);let top=vals.slice(0,2),card=s.cards[n]||"none",average=top.length===2?(top[0].time+top[1].time)/2:null,penalty=card==="red"&&average!==null?5:0;return{name:n,count:vals.length,best:vals.length?vals[0].time:null,bestRound:vals.length?vals[0].round:null,topCount:top.length,average,penalty,adjustedAverage:average===null?null:average+penalty,card,topTimes:top};});}
+function getCategoryRows(cat){let s=state[cat],ns=namesFrom(s.text);return ns.map(n=>{let vals=[];for(let r=1;r<=(Number(state.meta.roundCount)||4);r++){let v=validTime(s.times[n]&&s.times[n][r]);if(v!==null)vals.push({time:v,round:r});}vals.sort((a,b)=>a.time-b.time);let top=vals.slice(0,2),card=s.cards[n]||"none",average=top.length===2?(top[0].time+top[1].time)/2:null,penalty=card==="red"&&average!==null?5:0;return{name:n,count:vals.length,best:vals.length?vals[0].time:null,bestRound:vals.length?vals[0].round:null,topCount:top.length,average,penalty,adjustedAverage:average===null?null:average+penalty,card,topTimes:top};});}
 function getOverallBest(){let records=[];CATS.forEach(cat=>getCategoryRows(cat).forEach(r=>{if(r.best!==null)records.push({name:r.name,time:r.best,round:r.bestRound,cat});}));records.sort((a,b)=>a.time-b.time);return records.length?{time:records[0].time,records:records.filter(r=>r.time===records[0].time)}:null;}
 function renderOverallRecord(){let best=getOverallBest();if(!best){overallRecord.innerHTML='<div class="empty">Inserisci un tempo valido in una qualsiasi categoria per vedere il record generale.</div>';return;}let r=best.records[0],len=validTime(state.meta.trackLength),speed=len!==null?len/r.time:null,bonusNames=best.records.map(x=>esc(x.name)+' ('+LABELS[x.cat]+')').join(', ');overallRecord.innerHTML='<div class="record-card"><div>BEST LAP ASSOLUTO</div><div class="record-time">'+r.time.toFixed(3)+' s</div><div class="record-name">'+bonusNames+'</div><div class="record-meta">'+(best.records.length>1?'Ex aequo · ':'')+'Categoria '+LABELS[r.cat]+' · Manche '+r.round+' · Bonus campionato: +5 punti</div>'+(speed!==null?'<div style="margin-top:10px">Velocità media sul giro: <strong>'+speed.toFixed(3)+' m/s</strong> ('+(speed*3.6).toFixed(2)+' km/h)</div>':'<div class="record-meta" style="margin-top:10px">Inserisci la lunghezza pista per calcolare la velocità.</div>')+'</div>';}
 function renderStandings(){let s=state[current],ns=namesFrom(s.text);if(!s.rounds||!ns.length){standings.innerHTML='<div class="empty">Inserisci i racer e genera le manche.</div>';renderOverallRecord();return;}
 let overallBest=getOverallBest(),bestTime=overallBest?overallBest.time:null,rows=getCategoryRows(current);rows.sort((a,b)=>{if(a.adjustedAverage===null&&b.adjustedAverage!==null)return 1;if(b.adjustedAverage===null&&a.adjustedAverage!==null)return -1;if(a.adjustedAverage===null&&b.adjustedAverage===null)return a.name.localeCompare(b.name);return a.adjustedAverage-b.adjustedAverage||a.best-b.best||a.name.localeCompare(b.name);});
 let bestAll=rows.reduce((m,r)=>r.best!==null&&(m===null||r.best<m)?r.best:m,null),len=validTime(state.meta.trackLength);
 let html='<p class="small">Best lap assoluto della categoria: <strong class="best">'+timeFmt(bestAll)+'</strong></p><div class="table-wrap"><table><thead><tr><th>Pos.</th><th>Racer</th><th>Cartellini</th><th>Punti piazzamento</th><th>Bonus best lap</th><th>Totale punti</th><th>Tempi</th><th>Due migliori tempi</th><th>Media con penalità (s)</th><th>Best lap (s)</th><th>Velocità media sul best lap</th></tr></thead><tbody>';
-rows.forEach((r,i)=>{let two=r.topTimes.map(v=>v.time.toFixed(3)).join(' + '),speed=len!==null&&r.best!==null?len/r.best:null,pos=r.topCount===2?i+1:null,placePoints=pos===null?0:(pos<=CHAMP_POINTS.length?CHAMP_POINTS[pos-1]:0),bonus=bestAll!==null&&r.best===bestAll?5:0,total=pos===null?(bonus?5:'—'):placePoints+bonus,cardLabel=r.card==='yellow'?'🟨 Giallo':r.card==='red'?'🟥 Rosso (+5 s)':'—';html+='<tr><td class="rank">'+(pos===null?'—':pos)+'</td><td>'+esc(r.name)+'</td><td><div class="card-actions"><button type="button" class="card-btn yellow '+(r.card==='yellow'?'selected':'')+'" data-card="yellow" data-racer="'+esc(r.name)+'" title="Cartellino giallo">🟨</button><button type="button" class="card-btn red '+(r.card==='red'?'selected':'')+'" data-card="red" data-racer="'+esc(r.name)+'" title="Cartellino rosso">🟥</button><span class="small">'+cardLabel+'</span></div></td><td><strong>'+ (pos===null?'—':placePoints) +'</strong></td><td class="'+(bonus?'bonus':'')+'">'+(pos===null?'—':(bonus?'+5':'0'))+'</td><td><strong>'+total+'</strong></td><td>'+r.count+'/4</td><td>'+(r.topCount?two:'—')+'</td><td>'+(r.adjustedAverage===null?'In attesa di 2 tempi':r.adjustedAverage.toFixed(3)+(r.penalty?' <span class="penalty">(+5.000)</span>':''))+'</td><td class="'+(r.best===bestAll&&r.best!==null?'best':'')+'">'+(r.best===null?'—':r.best.toFixed(3))+'</td><td>'+(speed===null?'Inserisci lunghezza pista':speed.toFixed(3)+' m/s ('+(speed*3.6).toFixed(2)+' km/h)')+'</td></tr>';});
+rows.forEach((r,i)=>{let two=r.topTimes.map(v=>v.time.toFixed(3)).join(' + '),speed=len!==null&&r.best!==null?len/r.best:null,pos=r.topCount===2?i+1:null,placePoints=pos===null?0:(pos<=CHAMP_POINTS.length?CHAMP_POINTS[pos-1]:0),bonus=bestAll!==null&&r.best===bestAll?5:0,total=pos===null?(bonus?5:'—'):placePoints+bonus,cardLabel=r.card==='yellow'?'🟨 Giallo':r.card==='red'?'🟥 Rosso (+5 s)':'—';html+='<tr><td class="rank">'+(pos===null?'—':pos)+'</td><td>'+esc(r.name)+'</td><td><div class="card-actions"><button type="button" class="card-btn yellow '+(r.card==='yellow'?'selected':'')+'" data-card="yellow" data-racer="'+esc(r.name)+'" title="Cartellino giallo">🟨</button><button type="button" class="card-btn red '+(r.card==='red'?'selected':'')+'" data-card="red" data-racer="'+esc(r.name)+'" title="Cartellino rosso">🟥</button><span class="small">'+cardLabel+'</span></div></td><td><strong>'+ (pos===null?'—':placePoints) +'</strong></td><td class="'+(bonus?'bonus':'')+'">'+(pos===null?'—':(bonus?'+5':'0'))+'</td><td><strong>'+total+'</strong></td><td>'+r.count+'/'+(Number(state.meta.roundCount)||4)+'</td><td>'+(r.topCount?two:'—')+'</td><td>'+(r.adjustedAverage===null?'In attesa di 2 tempi':r.adjustedAverage.toFixed(3)+(r.penalty?' <span class="penalty">(+5.000)</span>':''))+'</td><td class="'+(r.best===bestAll&&r.best!==null?'best':'')+'">'+(r.best===null?'—':r.best.toFixed(3))+'</td><td>'+(speed===null?'Inserisci lunghezza pista':speed.toFixed(3)+' m/s ('+(speed*3.6).toFixed(2)+' km/h)')+'</td></tr>';});
 html+='</tbody></table></div><p class="small">Il cartellino giallo è solo segnaletico. Il cartellino rosso aggiunge 5 secondi alla media dei due migliori tempi e può modificare il piazzamento. Il bonus di 5 punti viene assegnato al miglior best lap di ciascuna categoria: un bonus per T-MEC, uno per Expert e uno per Open. In caso di parità sul best lap della categoria, il bonus viene assegnato a tutti i racer a pari merito. I punti totali sono la somma dei punti di piazzamento e del bonus best lap.</p>';standings.innerHTML=html;standings.querySelectorAll("button[data-card]").forEach(btn=>btn.addEventListener("click",()=>{let name=btn.dataset.racer,kind=btn.dataset.card,currentCard=s.cards[name]||"none";s.cards[name]=currentCard===kind?"none":kind;persist();renderStandings();}));renderOverallRecord();}
 function switchCat(c){state[current].text=area.value;persist();current=c;document.querySelectorAll("[data-cat]").forEach(b=>b.classList.toggle("active",b.dataset.cat===c));area.value=state[c].text||"";updateCount();renderBatteries();renderTimings();status.textContent="Categoria selezionata: "+LABELS[c]+".";}
 document.querySelectorAll("[data-cat]").forEach(b=>b.addEventListener("click",()=>switchCat(b.dataset.cat)));
 area.addEventListener("input",()=>{updateCount();state[current].rounds=null;renderBatteries();renderTimings();status.textContent="Elenco aggiornato. Rigenera le manche se hai modificato gli iscritti.";});
-document.getElementById("generate").addEventListener("click",()=>{updateCount();let ns=namesFrom(area.value);if(ns.length<2){status.textContent="Inserisci almeno 2 nomi distinti.";return;}state[current].rounds=makeSchedule(ns);let keep={},keepCards={};ns.forEach(n=>{if(state[current].times[n])keep[n]=state[current].times[n];if(state[current].cards&&state[current].cards[n])keepCards[n]=state[current].cards[n];});state[current].times=keep;state[current].cards=keepCards;persist();renderBatteries();renderTimings();status.textContent="Quattro manche generate per "+LABELS[current]+".";});
+document.getElementById("generate").addEventListener("click",()=>{updateCount();let ns=namesFrom(area.value);if(ns.length<2){status.textContent="Inserisci almeno 2 nomi distinti.";return;}state[current].rounds=makeSchedule(ns,Number(state.meta.roundCount)||4,0);let keep={},keepCards={};ns.forEach(n=>{if(state[current].times[n])keep[n]=state[current].times[n];if(state[current].cards&&state[current].cards[n])keepCards[n]=state[current].cards[n];});state[current].times=keep;state[current].cards=keepCards;persist();renderBatteries();renderTimings();status.textContent="Manche generate per "+LABELS[current]+".";});
+function setRoundCount(value){
+ const n=Math.max(1,Math.min(20,Math.floor(Number(value)||1)));
+ const old=Number(state.meta.roundCount)||4;
+ if(n>old){
+   CATS.forEach(cat=>{
+     const cs=state[cat],ns=namesFrom(cs.text||"");
+     if(cs.rounds&&ns.length&&cs.rounds.length<n){
+       const existing=cs.rounds.length;
+       cs.rounds.push(...makeSchedule(ns,n-existing,existing));
+     }
+   });
+ }
+ // In diminuzione non eliminiamo né le batterie né i tempi delle manche successive.
+ state.meta.roundCount=n;roundCountInput.value=n;persist();
+ renderBatteries();renderTimings();renderStandings();
+ status.textContent="Numero di manche impostato a "+n+". I dati delle altre manche sono conservati.";
+}
+document.getElementById("roundMinus").addEventListener("click",()=>setRoundCount((Number(state.meta.roundCount)||4)-1));
+document.getElementById("roundPlus").addEventListener("click",()=>setRoundCount((Number(state.meta.roundCount)||4)+1));
+roundCountInput.addEventListener("change",()=>setRoundCount(roundCountInput.value));
 document.getElementById("clear").addEventListener("click",()=>{if(!confirm("Cancellare iscritti, manche e tempi della categoria "+LABELS[current]+"?"))return;state[current]={text:"",rounds:null,times:{},cards:{}};area.value="";updateCount();renderBatteries();renderTimings();status.textContent="Categoria svuotata.";});
 document.getElementById("downloadBackup").addEventListener("click",()=>{
   state[current].text=area.value;persist();
@@ -166,13 +202,59 @@ document.getElementById("backupFile").addEventListener("change",async ev=>{
     const parsed=JSON.parse(await file.text());const incoming=parsed&&parsed.format==="mini4wd-palermo-backup"?parsed.data:parsed;
     if(!incoming||typeof incoming!=="object"||!CATS.every(c=>incoming[c]&&typeof incoming[c].text==="string"&&incoming[c].times&&typeof incoming[c].times==="object"))throw new Error("Formato non valido");
     if(!confirm("Il backup sostituirà i dati attualmente presenti in questo sito. Vuoi continuare?"))return;
-    state={meta:incoming.meta&&typeof incoming.meta==="object"?{trackLength:incoming.meta.trackLength||""}:{trackLength:""}};CATS.forEach(c=>{const v=incoming[c];state[c]={text:v.text,rounds:Array.isArray(v.rounds)?v.rounds:null,times:v.times&&typeof v.times==="object"?v.times:{},cards:v.cards&&typeof v.cards==="object"?v.cards:{}};});
-    trackLengthInput.value=state.meta.trackLength||"";current="TMEC";persist();document.querySelectorAll("[data-cat]").forEach(b=>b.classList.toggle("active",b.dataset.cat===current));area.value=state[current].text||"";trackLengthInput.value=state.meta.trackLength||"";updateCount();renderBatteries();renderTimings();renderOverallRecord();renderOverallRecord();status.textContent="Backup ripristinato correttamente per tutte le categorie e la lunghezza pista.";
+    state={meta:incoming.meta&&typeof incoming.meta==="object"?{trackLength:incoming.meta.trackLength||"",roundCount:Math.max(1,Math.min(20,Number(incoming.meta.roundCount)||4))}:{trackLength:"",roundCount:4}};CATS.forEach(c=>{const v=incoming[c];state[c]={text:v.text,rounds:Array.isArray(v.rounds)?v.rounds:null,times:v.times&&typeof v.times==="object"?v.times:{},cards:v.cards&&typeof v.cards==="object"?v.cards:{}};});
+    trackLengthInput.value=state.meta.trackLength||"";roundCountInput.value=state.meta.roundCount||4;current="TMEC";persist();document.querySelectorAll("[data-cat]").forEach(b=>b.classList.toggle("active",b.dataset.cat===current));area.value=state[current].text||"";trackLengthInput.value=state.meta.trackLength||"";roundCountInput.value=state.meta.roundCount||4;updateCount();renderBatteries();renderTimings();renderOverallRecord();renderOverallRecord();status.textContent="Backup ripristinato correttamente per tutte le categorie e la lunghezza pista.";
   }catch(err){alert("Non riesco a leggere questo backup. Seleziona un file JSON scaricato da questo sito.");}
   finally{ev.target.value="";}
 });
+
+document.getElementById("exportImage").addEventListener("click",()=>{
+ state[current].text=area.value;persist();
+ const rounds=Number(state.meta.roundCount)||4, width=2400, margin=80, rowH=48;
+ const cats=CATS.map(cat=>({cat,cs:state[cat],names:namesFrom(state[cat].text||""),rows:getCategoryRows(cat).filter(r=>r.topCount===2).sort((a,b)=>a.adjustedAverage-b.adjustedAverage||a.name.localeCompare(b.name))}));
+ let height=280;
+ cats.forEach(x=>height+=125+Math.max(x.names.length,1)*rowH+70);
+ const canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;
+ const ctx=canvas.getContext("2d");ctx.fillStyle="#f1f5f9";ctx.fillRect(0,0,width,height);
+ ctx.fillStyle="#111827";ctx.fillRect(0,0,width,220);
+ ctx.fillStyle="#bfdbfe";ctx.font="bold 26px Arial";ctx.fillText("GARA MINI 4WD PALERMO",margin,65);
+ ctx.fillStyle="#fff";ctx.font="bold 56px Arial";ctx.fillText("RIEPILOGO GARA",margin,135);
+ ctx.font="25px Arial";ctx.fillStyle="#dbeafe";ctx.fillText(new Date().toLocaleDateString("it-IT")+"  •  Pista: "+(state.meta.trackLength||"—")+" m  •  "+rounds+" manche",margin,185);
+ let y=270;
+ cats.forEach(({cat,cs,names,rows})=>{
+   ctx.fillStyle="#1d4ed8";ctx.fillRect(margin,y,width-2*margin,58);
+   ctx.fillStyle="#fff";ctx.font="bold 30px Arial";ctx.fillText(LABELS[cat],margin+20,y+39);y+=88;
+   const xs=[margin,margin+430,margin+980,margin+1450,margin+1740,margin+1980];
+   ctx.fillStyle="#334155";ctx.font="bold 21px Arial";
+   ["RACER","TEMPI MANCH E","MEDIA + PEN.","BEST LAP","POSIZIONE","PUNTI"].forEach((v,i)=>ctx.fillText(v,xs[i],y));y+=rowH;
+   const ranked=new Map(rows.map((r,i)=>[r.name,{r,pos:i+1}]));
+   names.forEach(name=>{
+     const info=ranked.get(name),r=info&&info.r,vals=[];
+     for(let n=1;n<=rounds;n++){const t=validTime(cs.times[name]&&cs.times[name][n]);vals.push(t===null?"—":t.toFixed(3));}
+     const best=r&&r.best!==null?r.best.toFixed(3):"—",avg=r&&r.adjustedAverage!==null?r.adjustedAverage.toFixed(3):"—";
+     const pos=info?info.pos+"°":"—",place=info?(CHAMP_POINTS[info.pos-1]||0):0;
+     const categoryBest=rows.reduce((m,x)=>x.best!==null&&(m===null||x.best<m)?x.best:m,null);
+     const bonus=r&&categoryBest!==null&&r.best===categoryBest?5:0;
+     const total=info?place+bonus:0;
+     ctx.fillStyle="#0f172a";ctx.font="22px Arial";
+     ctx.fillText(name.slice(0,25),xs[0],y);
+     ctx.font="19px Arial";ctx.fillText(vals.join(" | ").slice(0,60),xs[1],y);
+     ctx.fillText(avg,xs[2],y);ctx.fillText(best,xs[3],y);ctx.fillText(pos,xs[4],y);ctx.fillText(String(total)+(bonus?"*":""),xs[5],y);
+     y+=rowH;ctx.strokeStyle="#dbe2ea";ctx.beginPath();ctx.moveTo(margin,y-12);ctx.lineTo(width-margin,y-12);ctx.stroke();
+   });
+   y+=70;
+ });
+ ctx.fillStyle="#475569";ctx.font="19px Arial";ctx.fillText("* Punti totali: piazzamento + bonus di 5 punti per il miglior best lap della categoria. Cartellino rosso: +5 s sulla media.",margin,height-24);
+ canvas.toBlob(blob=>{
+   if(!blob){status.textContent="Impossibile creare il PNG.";return;}
+   const url=URL.createObjectURL(blob),a=document.createElement("a");
+   a.href=url;a.download="riepilogo-gara-mini4wd-"+new Date().toISOString().slice(0,10)+".png";
+   document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+   status.textContent="Riepilogo gara PNG scaricato.";
+ },"image/png");
+});
 document.getElementById("print").addEventListener("click",()=>window.print());
-area.value=state[current].text||"";trackLengthInput.value=state.meta.trackLength||"";updateCount();renderBatteries();renderTimings();renderOverallRecord();
+area.value=state[current].text||"";trackLengthInput.value=state.meta.trackLength||"";roundCountInput.value=state.meta.roundCount||4;updateCount();renderBatteries();renderTimings();renderOverallRecord();
 })();
 </script>
 </body></html>
