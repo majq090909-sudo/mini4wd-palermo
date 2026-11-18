@@ -46,7 +46,7 @@ footer{text-align:center;color:var(--muted);font-size:.82rem;padding:8px}
     align-items:start;
   }
   .hero{grid-area:hero}
-  .editor{grid-area:editor;align-self:stretch;max-height:calc(100vh - 110px);overflow:auto;position:sticky;top:12px}
+  .editor{grid-area:editor;align-self:start;max-height:none;overflow:visible;position:static;z-index:auto}
   .batteries-panel{grid-area:batteries;max-height:36vh;overflow:auto}
   .timings-panel{grid-area:timings;max-height:43vh;overflow:auto}
   .standings-panel{grid-area:standings;width:100%;max-height:none;overflow:visible}
@@ -147,7 +147,7 @@ function renderBatteries(){let s=state[current];document.getElementById("resultC
 let html="";s.rounds.slice(0,Number(state.meta.roundCount)||4).forEach((groups,ri)=>{html+='<section class="round"><h3>Manche '+(ri+1)+'</h3><div class="battery-grid">';let bn=0;groups.forEach(g=>{let bye=g.length===1;if(!bye)bn++;let entries=g.map(item=>typeof item==="string"?{name:item,lane:null}:item);html+='<article class="battery"><h4>'+(bye?"Riposo":"Batteria "+bn)+'</h4><ol>'+entries.map(item=>'<li>'+esc(item.name)+(item.lane?' <span class="pill">Corsia '+item.lane+'</span>':'')+'</li>').join("")+'</ol></article>';});html+='</div></section>';});batteries.innerHTML=html;}
 function validTime(v){if(v===null||v===undefined||String(v).trim()==="")return null;let n=Number(String(v).trim().replace(",","."));return Number.isFinite(n)&&n>0?n:null;}
 function timeFmt(n){return n===null||n===undefined?"—":n.toFixed(3)+" s";}
-function renderTimings(){let s=state[current],ns=namesFrom(s.text);document.getElementById("timeCat").textContent=LABELS[current];if(!s.rounds||!ns.length){timings.innerHTML='<div class="empty">Genera prima le manche per creare la tabella dei tempi.</div>';renderStandings();return;}
+function renderTimings(){let s=state[current],ns=namesFrom(s.text).slice().sort((a,b)=>a.localeCompare(b,"it",{sensitivity:"base"}));document.getElementById("timeCat").textContent=LABELS[current];if(!s.rounds||!ns.length){timings.innerHTML='<div class="empty">Genera prima le manche per creare la tabella dei tempi.</div>';renderStandings();return;}
 let roundCount=Number(state.meta.roundCount)||4;
 let html='<div class="table-wrap"><table class="time-table"><thead><tr><th>Racer</th>'+Array.from({length:roundCount},(_,i)=>'<th>Manche '+(i+1)+' (s)</th>').join('')+'</tr></thead><tbody>';
 ns.forEach(n=>{html+='<tr><td>'+esc(n)+'</td>';for(let r=1;r<=roundCount;r++){let v=s.times[n]&&s.times[n][r]!==undefined?s.times[n][r]:"";html+='<td><input type="number" min="0" step="0.001" inputmode="decimal" aria-label="'+esc(n)+' manche '+r+'" data-racer="'+esc(n)+'" data-round="'+r+'" value="'+esc(String(v))+'" placeholder="es. 23.451"></td>';}html+='</tr>';});html+='</tbody></table></div>';timings.innerHTML=html;
